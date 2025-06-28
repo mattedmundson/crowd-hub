@@ -1,0 +1,343 @@
+# Challenge App - Product Requirements Document
+
+## Overview
+
+The Challenge App is a white-label spiritual growth platform that enables churches and organizations to guide their communities through structured personal development journeys. The platform combines daily challenges, guided journaling, and progress tracking in a single, beautifully designed application that respects user privacy while fostering community engagement.
+
+**Problem Statement:** Churches and individuals currently use multiple fragmented tools for spiritual growth activities, leading to low engagement and inconsistent practice. There's no unified platform that combines structured challenges with personal reflection while maintaining the privacy and flexibility users need.
+
+**Target Market:** Primary focus on small to medium churches (50-1000 members) seeking to enhance congregation engagement in spiritual practices. Secondary markets include corporate wellness programs and personal coaching practices.
+
+**Key Value Proposition:** All-in-one platform that reduces app fatigue by combining challenges, journaling, and future course content in a single, beautiful interface that inspires daily use.
+
+## Core Features
+
+### 1. User Authentication & Onboarding
+**What it does:** Secure email/password authentication with a streamlined onboarding flow that gets users into their first challenge within minutes.
+
+**Why it's important:** Sets the tone for the entire user experience and ensures users can maintain their progress across devices.
+
+**How it works:**
+- Email/password registration with Supabase Auth
+- Simple two-step onboarding: account creation → schedule selection (morning only vs morning + evening)
+- Cookie-based session management for security
+- Password reset functionality via email
+
+### 2. 100-Day Challenge System
+**What it does:** Delivers daily prompts for structured spiritual growth with flexible engagement options and weekly review cycles.
+
+**Why it's important:** The core value proposition - provides structure and guidance that helps users build consistent spiritual habits.
+
+**How it works:**
+- Pre-loaded challenges (starting with 100 Days of Gratitude)
+- Daily prompts that unlock at midnight local time
+- Support for morning-only or morning + evening reflections
+- Every 7th day becomes a review day for deeper reflection
+- Auto-save functionality prevents lost work
+- "Done offline" option respects users who prefer paper journaling
+
+### 3. Progress Tracking & Motivation
+**What it does:** Visual representation of user's journey including streak tracking, calendar view, and completion statistics.
+
+**Why it's important:** Motivation through visible progress is crucial for maintaining engagement over 100 days.
+
+**How it works:**
+- Current streak counter with flame icon
+- Calendar view showing completed, missed, and future days
+- Visual progress bar
+- Completion rate statistics
+- Quick navigation to any past entry for review/editing
+
+### 4. Entry System with Auto-Save
+**What it does:** Distraction-free writing experience with automatic saving and offline support.
+
+**Why it's important:** Removes friction from the daily practice and ensures users never lose their reflections.
+
+**How it works:**
+- Clean text editor with expandable writing area
+- Auto-save after 2 seconds of inactivity
+- Offline queue with sync when connection returns
+- Local storage backup for redundancy
+- Character count indicator (optional)
+
+### 5. Weekly Review Feature
+**What it does:** Every 7th day, users review their past week's entries and add additional insights.
+
+**Why it's important:** Deepens the learning experience and helps users identify patterns in their spiritual growth.
+
+**How it works:**
+- Different UI on review days showing past 6 entries
+- Expandable cards for each day's entry
+- Ability to add review notes to any entry
+- Overall weekly reflection prompt
+- Future: highlight key insights for easy reference
+
+## User Experience
+
+### User Personas
+
+**Primary: Sarah, 35, Church Member**
+- Busy professional seeking structured spiritual growth
+- Uses smartphone primarily, occasionally desktop
+- Wants privacy in her spiritual journey
+- Appreciates beautiful, intuitive design
+- Struggles with consistency in spiritual practices
+
+**Secondary: Pastor James, 45, Church Administrator**
+- Leads a 200-member congregation
+- Basic technical skills
+- Wants to guide congregation through growth initiatives
+- Needs simple setup and management
+- Values member privacy while tracking engagement
+
+### Key User Flows
+
+1. **First-Time User Flow:**
+   - Land on marketing page → Sign up
+   - Choose morning/evening schedule
+   - See first day's prompt
+   - Write first reflection
+   - See streak begin
+
+2. **Daily Return Flow:**
+   - Open app → See today's prompt immediately
+   - Write reflection with auto-save
+   - View updated streak
+   - Optional: check calendar progress
+
+3. **Weekly Review Flow:**
+   - Day 7/14/21 etc. shows different UI
+   - Review past 6 days' entries
+   - Add insights to specific days
+   - Complete weekly reflection
+   - Continue to next week
+
+### UI/UX Considerations
+
+- **Mobile-First Design:** Optimized for one-handed use with thumb-reachable actions
+- **Calm Aesthetic:** Soft gradients, generous whitespace, elegant typography
+- **Progressive Disclosure:** Start simple, reveal features as needed
+- **Accessibility:** WCAG AAA compliance, large touch targets, screen reader support
+- **Offline-First:** Full functionality without connection, sync when available
+
+# Technical Architecture
+
+## System Components
+
+### Frontend Stack
+- **Framework:** Next.js 14 with App Router
+- **Styling:** Tailwind CSS for rapid development
+- **State Management:** Zustand for simplicity
+- **Component Library:** Custom components following design system
+
+### Backend Infrastructure
+- **Database:** PostgreSQL via Supabase
+- **Authentication:** Supabase Auth with JWT tokens
+- **Real-time:** Supabase Realtime for auto-save
+- **Storage:** Supabase Storage for future features
+- **Hosting:** Vercel for optimal Next.js performance
+
+### Data Models
+
+**Core Tables:**
+- `users`: Authentication and profile data
+- `challenges`: Available challenge definitions
+- `challenge_prompts`: Daily prompts for each challenge
+- `user_challenges`: User's active challenge and progress
+- `challenge_entries`: Daily entries and reflections
+
+**Key Relationships:**
+- User → UserChallenge (one active at a time)
+- UserChallenge → ChallengeEntries (one per day)
+- Challenge → ChallengePrompts (100 prompts)
+
+### APIs and Integrations
+
+**Internal APIs:**
+- `/api/auth/*`: Registration, login, session management
+- `/api/challenges/*`: Challenge data and management
+- `/api/entries/*`: Entry creation and updates
+- `/api/progress/*`: Streak and calendar data
+
+**External Services:**
+- Supabase for all backend services
+- Vercel Analytics for performance monitoring
+- Sentry for error tracking
+- Future: SendGrid for email notifications
+
+### Infrastructure Requirements
+
+- **Performance:** <2s page load, <500ms API responses
+- **Scale:** Support 10,000 concurrent users
+- **Uptime:** 99.5% availability target
+- **Security:** HTTPS only, encrypted at rest, RLS policies
+- **Backup:** Daily automated backups
+
+# Development Roadmap
+
+## MVP Requirements (Phase 1)
+**Goal:** Launch core challenge experience with one pre-loaded challenge
+
+**Scope:**
+1. User authentication (email/password)
+2. 100-day gratitude challenge
+3. Daily prompt display and entry
+4. Morning/evening schedule options
+5. Auto-save functionality
+6. Offline support with sync
+7. Weekly review feature
+8. Basic progress tracking (streak, calendar)
+9. Mobile-responsive design
+
+**Success Criteria:**
+- 40% of users complete 50+ days
+- 60% daily active usage during challenge
+- <3 minute daily engagement time
+
+## Future Enhancements (Phase 2)
+**Goal:** Add community features and multiple challenges
+
+**Scope:**
+1. Church community creation
+2. Privacy-preserving leaderboards
+3. Multiple challenge support
+4. Journal feature (unlimited entries)
+5. Highlight/learning extraction
+6. Push notifications
+7. Data export functionality
+8. Email reminders
+
+## Phase 3 and Beyond
+1. Course content system
+2. Live streaming integration
+3. Discussion forums
+4. Custom challenge creation
+5. Mobile app (React Native)
+6. Advanced analytics dashboard
+7. White-label customization
+8. Multi-language support
+
+# Logical Dependency Chain
+
+## Foundation (Week 1-2)
+1. **Database Schema Setup**
+   - All tables, relationships, and RLS policies
+   - Seed data for gratitude challenge
+   - Required for all other features
+
+2. **Authentication System**
+   - Supabase Auth integration
+   - Protected routes
+   - Required for user data isolation
+
+3. **Base Component Library**
+   - Design system implementation
+   - Common UI components
+   - Required for consistent UI
+
+## Core Features (Week 3-4)
+4. **Challenge Display System**
+   - Fetch and display daily prompts
+   - Day calculation logic
+   - Depends on: Database, Auth
+
+5. **Entry Creation/Editing**
+   - Text input with auto-save
+   - Offline queue system
+   - Depends on: Challenge Display
+
+6. **Progress Tracking**
+   - Streak calculations
+   - Calendar view
+   - Depends on: Entry System
+
+## Enhanced Experience (Week 5-6)
+7. **Weekly Review Feature**
+   - Special UI for day 7/14/21
+   - Review note functionality
+   - Depends on: Entry System
+
+8. **Onboarding Flow**
+   - Schedule selection
+   - First-day experience
+   - Depends on: All core features
+
+9. **Polish and Testing**
+   - Error handling
+   - Loading states
+   - Performance optimization
+   - Depends on: All features complete
+
+## Post-MVP Iterations
+10. **Community Features**
+    - Church creation/joining
+    - Leaderboards
+    - Depends on: Stable MVP
+
+11. **Multiple Challenges**
+    - Challenge selection
+    - Concurrent challenges
+    - Depends on: Refactored data model
+
+12. **Advanced Features**
+    - Highlights system
+    - Export functionality
+    - Email notifications
+    - Depends on: User feedback and needs
+
+# Risks and Mitigations
+
+## Technical Risks
+
+**Risk:** Auto-save conflicts with offline usage
+- **Mitigation:** Implement conflict resolution with last-write-wins + version history
+
+**Risk:** Performance degradation with 100-day calendar views
+- **Mitigation:** Pagination, virtualization, and efficient query design
+
+**Risk:** Supabase rate limits during peak usage
+- **Mitigation:** Implement caching layer and request batching
+
+## User Adoption Risks
+
+**Risk:** Low engagement after first week
+- **Mitigation:** Strategic notifications, streak celebrations, weekly reviews
+
+**Risk:** Churches reluctant to pay for another tool
+- **Mitigation:** Generous free tier, clear ROI metrics, easy setup
+
+**Risk:** Privacy concerns from congregation
+- **Mitigation:** Clear privacy policy, zero leader visibility into entries
+
+## Market Risks
+
+**Risk:** Competition from established apps
+- **Mitigation:** Focus on all-in-one value prop, beautiful design, church-specific features
+
+**Risk:** Seasonal usage patterns
+- **Mitigation:** Multiple challenge types, year-round content calendar
+
+# Appendix
+
+## Research Findings
+- Churches currently cobble together 3-4 different tools
+- 60% of spiritual app users abandon within first week
+- Privacy is #1 concern for journal-type features
+- Beautiful design significantly impacts daily usage
+- Offline capability crucial for consistent engagement
+
+## Technical Specifications
+- See comprehensive 4-stage planning document for:
+  - Detailed database schemas
+  - API endpoint specifications
+  - Component architecture
+  - Security implementation
+  - Testing strategies
+  - Deployment procedures
+
+## Success Metrics
+- **User Engagement:** DAU/MAU ratio >50%
+- **Completion Rate:** 40% reach day 50
+- **Technical:** <2s load time, 99.5% uptime
+- **Business:** 10 churches in first 6 months
+- **User Satisfaction:** >4.5 app store rating

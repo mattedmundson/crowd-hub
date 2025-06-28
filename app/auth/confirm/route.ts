@@ -17,6 +17,21 @@ export async function GET(request: NextRequest) {
       token_hash,
     });
     if (!error) {
+      // Check if user has completed onboarding
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('first_name, last_name, country')
+          .eq('id', user.id)
+          .single();
+        
+        // If profile is incomplete, redirect to onboarding
+        if (!profile || !profile.first_name || !profile.last_name || !profile.country) {
+          redirect('/onboarding');
+        }
+      }
+      
       // redirect user to specified redirect URL or root of app
       redirect(next);
     } else {

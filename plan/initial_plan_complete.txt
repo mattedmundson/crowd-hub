@@ -1,0 +1,1855 @@
+#Stage 1: User Validation & Problem Definition
+
+## Problem Statement
+**What problem are we solving?**
+Churches and individuals lack a unified platform for structured spiritual growth that combines guided challenges with personal reflection. Current solutions require multiple apps, leading to fragmented experiences and lower engagement in spiritual development practices.
+
+**Why does this problem matter?**
+Consistent spiritual practices are foundational to faith development, but without structure and beautiful tools that inspire daily use, people struggle to build lasting habits. Churches need simple ways to guide their congregations through growth journeys while respecting individual privacy.
+
+---
+
+## Target Users & Market Analysis
+
+### Primary User Persona
+**Who:** Adults aged 20-50, active in faith communities, comfortable with basic technology, seeking structured spiritual growth
+**Pain Points:** 
+* App fatigue from using multiple platforms for different spiritual practices
+* Lack of structured guidance for building consistent devotional habits
+* Difficulty tracking spiritual growth journey over time
+
+**Current Solutions They Use:**
+* Generic journal apps (Day One, Apple Journal) - [Not designed for spiritual challenges]
+* Multiple specialized apps - [Creates fragmented experience]
+* Paper journals + email challenges - [No progress tracking or community aspect]
+
+**Success Metrics:**
+* Daily active usage rate (target: 60%+ during active challenge)
+* Challenge completion rate (target: 40%+ complete 80+ days of 100)
+
+### Secondary User Persona
+**Who:** Church administrators/pastors at small-medium churches (50-1000 members)
+**Pain Points:**
+* No unified platform to guide congregation through growth initiatives
+* Inability to track engagement without invading privacy
+* Complex setup for non-technical staff
+
+**Success Metrics:**
+* Congregation participation rate (target: 25%+ of active members)
+* Admin setup time (target: under 30 minutes)
+
+---
+
+## User Stories & Acceptance Criteria
+
+### Epic 1: Individual completes structured spiritual challenge
+**As a** church member, **I want** to participate in a 100-day gratitude challenge **so that** I can build a consistent spiritual practice with daily guidance
+
+**Acceptance Criteria:**
+* I can view today's challenge prompt with inspirational guidance
+* I can write my reflection directly in the app or mark it as "completed offline"
+* I can choose morning-only or morning+evening entries at the start
+* I can review my past 6 entries every 7th day and add additional insights
+
+### Epic 2: Church administrator launches congregation-wide challenge
+**As a** church administrator, **I want** to invite my congregation to a shared challenge **so that** we can grow together while respecting individual privacy
+
+**Acceptance Criteria:**
+* I can create a church community and invite members via code/link
+* I can see participation metrics (days completed) without seeing content
+* I can launch pre-made challenges without technical complexity
+
+### Epic 3: User captures and reviews key learnings
+**As a** user, **I want** to highlight important insights from my journey **so that** I can easily review my spiritual growth over time
+
+**Acceptance Criteria:**
+* I can add comments to any day's entry after initial submission
+* I can "highlight" key insights to a separate learnings document
+* I can export or review all highlights from a completed challenge
+
+---
+
+## Competitive Analysis
+### Direct Competitors
+* **Generic journal apps (Day One):** Great for freeform journaling but lack structured challenges and spiritual focus
+* **Church apps (YouVersion):** Focus on Bible reading plans, not personal reflection and challenges
+
+### Indirect Competitors
+* **Email devotionals:** No interactivity, tracking, or community features
+* **Printed journals:** No flexibility, no community aspect, can't track progress
+
+### Our Differentiation
+* All-in-one platform reducing app fatigue
+* Privacy-first design with optional community features
+* Beautiful, inspiring design that makes users want to engage daily
+* Flexibility: use in-app or with paper journal
+
+---
+
+## Assumptions & Risks
+
+### Key Assumptions
+* Churches want structured growth tools for congregations - [Validate with 3 church leader interviews]
+* Users will prefer unified platform over specialized apps - [Test with 20 beta users]
+* 20-50 age demographic is comfortable with app-based spiritual practices - [Monitor adoption rates]
+
+### Risk Assessment
+* **High Risk:** Low daily engagement after first week - [Mitigation: Beautiful UI, smart notifications, weekly review prompts]
+* **Medium Risk:** Churches don't see value in paid platform - [Mitigation: Strong free tier, clear ROI metrics]
+* **Low Risk:** Technical complexity - [Mitigation: Keep MVP extremely simple]
+
+---
+
+## MVP Definition & Success Criteria
+
+### MVP Scope
+**Core Job-to-be-Done:** Enable users to complete a structured 100-day challenge with daily prompts and weekly reviews
+
+**MVP Features:**
+1. User authentication and basic profile - [Essential for progress tracking]
+2. 100-day challenge with morning/evening option - [Core value proposition]
+3. Daily prompt display with text entry or "done offline" - [Flexibility for different users]
+4. Weekly review on day 7 with comment capability - [Deepens engagement]
+5. Basic progress tracking (streak counter, calendar view) - [Motivation mechanism]
+
+**Explicitly NOT in MVP:**
+* Multiple concurrent challenges - [Adds complexity]
+* Church community features/leaderboards - [Privacy concerns need careful design]
+* Course content system - [Different user flow]
+* Highlight/learnings system - [Can be added based on user feedback]
+* Custom challenge creation - [Validate demand first]
+
+### Success Metrics
+* **Primary Metric:** 40% of users complete at least 50 days of first challenge
+* **Secondary Metrics:** 60% daily active usage rate during challenge, 80% use review feature
+* **Leading Indicators:** Day 7 retention rate of 70%, average session time 3+ minutes
+
+---
+
+## Validation Questions
+* Will churches pay for this vs. expecting free tools?
+* Do users actually want unified platform or prefer specialized apps?
+* Is privacy from church leadership truly important or assumed?
+* Will beautiful design actually drive higher engagement rates?
+
+---
+
+# Stage 2: System Architecture & Technical Planning
+
+## MVP User Flow
+1. User lands on marketing page → Sign up/Login
+2. First-time user sees onboarding → Choose morning-only or morning+evening
+3. User joins/starts a challenge → Sees today's prompt
+4. User writes reflection or marks "done offline" → Progress updates
+5. Daily return → See new prompt based on schedule
+6. Every 7th day → Review mode shows past 6 entries
+7. Add comments to previous entries → Deepen insights
+8. View progress (calendar/streak) → Stay motivated
+9. Complete challenge → See completion certificate/summary
+
+---
+
+## Core Features (MVP)
+
+### User Authentication & Profile
+*Secure authentication system using Supabase Auth with email/password, enabling users to maintain their challenge progress across devices*
+
+**User Value:**
+* Secure, private spiritual journey tracking
+* Access from any device with progress synced
+
+**Core Requirements:**
+* Email/password authentication with Supabase Auth
+* Password reset functionality
+* Basic profile (name, email, challenge preferences)
+* Session management with JWT tokens
+
+**Technical Components:**
+* Supabase Auth with cookie-based sessions
+* Protected routes using Next.js middleware
+* Profile table in Supabase
+
+**Performance Requirements:**
+* Login/signup < 2 seconds
+* Session validation < 100ms
+* Auto-refresh tokens before expiry
+
+**Dependencies:**
+* Supabase Auth service
+* Email service for password resets (Supabase built-in)
+
+### 100-Day Challenge System
+*Core challenge engine that delivers daily prompts, tracks progress, and manages the structured spiritual growth journey*
+
+**User Value:**
+* Structured guidance for spiritual growth
+* Flexible engagement (morning/evening/both)
+* Never lose progress with automatic saving
+
+**Core Requirements:**
+* Display daily prompts based on user's day number
+* Support morning-only or morning+evening modes
+* Track completion status per entry
+* Handle timezone considerations
+* Weekly review mode every 7th day
+
+**Technical Components:**
+* Challenges table (id, title, description)
+* Challenge_prompts table (challenge_id, day_number, morning_prompt, evening_prompt)
+* User_challenges table (user_id, challenge_id, start_date, mode, current_day)
+* Challenge_entries table (user_id, challenge_id, day_number, morning_entry, evening_entry, completed_offline, created_at)
+
+**Performance Requirements:**
+* Prompt loading < 500ms
+* Entry auto-save within 1 second
+* Support 10,000 concurrent users
+
+**Dependencies:**
+* Supabase Realtime for auto-save
+* Timezone detection library
+
+### Daily Entry System
+*Intuitive interface for users to engage with prompts and record their reflections, supporting both in-app and offline journaling*
+
+**User Value:**
+* Beautiful, distraction-free writing experience
+* Flexibility to journal offline while maintaining streak
+* Auto-save prevents lost work
+
+**Core Requirements:**
+* Rich text editor for entries
+* "Mark as done offline" option
+* Auto-save functionality
+* Character limit (optional)
+* Add comments to past entries
+
+**Technical Components:**
+* Next.js form with auto-save hook
+* Supabase Realtime subscriptions
+* Debounced save function
+* Local storage backup
+
+**Performance Requirements:**
+* Auto-save latency < 1 second
+* No data loss on connection issues
+* Smooth typing experience (no lag)
+
+**Dependencies:**
+* Rich text editor component (Tiptap or similar)
+* Supabase Realtime
+
+### Progress Tracking & Motivation
+*Visual progress indicators and streak tracking to maintain user engagement throughout the 100-day journey*
+
+**User Value:**
+* Clear visualization of journey progress
+* Motivation through streak tracking
+* Quick access to past entries
+
+**Core Requirements:**
+* Calendar view with completed days
+* Current streak counter
+* Total days completed
+* Visual progress bar
+* Quick navigation to any past entry
+
+**Technical Components:**
+* Progress calculation functions
+* Calendar component with day states
+* Progress analytics queries
+
+**Performance Requirements:**
+* Progress calculation < 200ms
+* Calendar render < 500ms
+
+**Dependencies:**
+* Calendar UI component library
+* Date manipulation library (date-fns)
+
+---
+
+## Scalability & Performance Considerations
+
+### Current Scale (MVP)
+* Expected users: 1,000-5,000 in first year
+* Expected daily transactions: 10,000 entry saves
+* Data storage needs: ~1GB per 1000 users
+
+### Future Scale (6-12 months)
+* Projected users: 10,000-25,000
+* Projected daily transactions: 50,000-100,000
+* When we'll need to refactor: When adding real-time community features
+
+### Performance Targets
+* Page load time: < 2 seconds
+* API response time: < 500ms
+* Uptime requirement: 99.5%
+
+---
+
+## Technology Stack & Justification
+
+### Frontend
+* **Framework:** Next.js 14 (App Router) - [Server components for better performance, built-in optimization]
+* **State Management:** Zustand - [Lightweight, simple for our needs]
+* **Styling:** Tailwind CSS - [Rapid development, consistent design system]
+
+### Backend
+* **Runtime/Framework:** Next.js API Routes + Supabase - [Serverless, scales automatically]
+* **Database:** PostgreSQL (Supabase) - [Relational data, built-in auth]
+* **Authentication:** Supabase Auth - [Secure, integrated with database]
+
+### Infrastructure
+* **Hosting:** Vercel - [Optimized for Next.js, great DX]
+* **Database/Auth:** Supabase - [All-in-one backend solution]
+* **Monitoring:** Vercel Analytics + Sentry - [Performance and error tracking]
+
+### Third-Party Services
+* **Email:** Supabase built-in (MVP) → SendGrid (scale) - [Transactional emails]
+* **File Storage:** Supabase Storage - [Profile pictures, future content]
+
+---
+
+## System Architecture Diagram---
+
+## Security & Compliance
+
+### Security Requirements
+* **Data encryption:** All data encrypted at rest (Supabase default) and in transit (HTTPS)
+* **Authentication:** Secure cookie-based sessions with httpOnly flags
+* **Input validation:** Sanitize all user inputs, prevent XSS
+* **Rate limiting:** Implement on auth endpoints (5 attempts/minute)
+
+### Compliance Considerations
+* **Privacy:** User entries never visible to admins/church leaders
+* **Data retention:** User can export/delete all data
+* **GDPR compliance:** Clear privacy policy, data export functionality
+* **COPPA:** No accounts for users under 13
+
+---
+
+## Testing Strategy
+
+### Testing Pyramid
+* **Unit Tests:** 80% coverage on business logic (challenge day calculations, streak logic)
+* **Integration Tests:** API endpoints, database queries, auth flows
+* **End-to-End Tests:** Complete user journey from signup to day 7 review
+
+### Performance Testing
+* **Load testing:** Simulate 1000 concurrent users
+* **Stress testing:** Test auto-save with poor connectivity
+* **Monitoring:** Vercel Analytics for Core Web Vitals
+
+---
+
+## Future Features (Post-MVP)
+
+### Church Community Features
+**User Value:** Connect with others on the same spiritual journey
+**Technical Requirements:**
+* Church/group tables and invitation system
+* Privacy-preserving progress sharing
+* Leaderboards showing only streak data
+
+**Dependencies:**
+* MVP user system working smoothly
+* Clear privacy controls implemented
+
+### Multiple Challenges & Journals
+**User Value:** Engage with different growth areas simultaneously
+**Technical Requirements:**
+* Refactor to support multiple active challenges
+* UI to switch between challenges
+* Separate progress tracking per challenge
+
+### Highlights & Learning System
+**User Value:** Extract and review key insights from journey
+**Technical Requirements:**
+* Highlights table linked to entries
+* Learning summary view
+* Export functionality for highlights
+
+---
+
+#Stage 3: User Experience & Interface Design
+
+## Design Principles & Aesthetic Direction
+
+### Core UX Principles
+* **User-Centered:** Every interface decision optimizes for the primary user job of completing daily spiritual reflections
+* **Progressive Disclosure:** Start simple with today's prompt, reveal features like reviews and progress naturally
+* **Feedback-Rich:** Celebrate streaks, confirm saves, guide users through their journey with gentle encouragement
+* **Accessible-First:** Large touch targets, high contrast, screen reader support from day one
+* **Performance-Conscious:** Instant feedback on actions, offline-capable design, smooth transitions
+
+### Visual Design Direction
+* **Information Hierarchy:** Today's prompt is always the hero, everything else supports this primary action
+* **Cognitive Load Management:** One primary action per screen, clear visual flow from prompt to entry
+* **Brand Personality:** Calm, inspiring, and sacred - using soft gradients, generous whitespace, and elegant typography
+* **Mobile-First:** Designed for one-handed use with thumb-reachable actions, scales beautifully to desktop
+
+---
+
+## Feature Screen Flows
+
+### Feature: Authentication & Onboarding
+
+#### Screen: Welcome/Login
+**User Goal:** Quickly access their spiritual journey or begin a new one
+
+**State: Empty/Default**
+* **Layout:** Centered card with soft background gradient (white to light blue/purple)
+* **Key Elements:** App logo/name, email field, password field, "Continue" CTA, toggle between login/signup
+* **Interactions:** Auto-focus email field, show/hide password, single button for login/signup
+* **Accessibility:** Labels for all inputs, error announcements, minimum 44px touch targets
+
+**State: Loading**
+* **Loading Pattern:** Button transforms to show spinner, fields disabled
+* **Feedback:** "Creating your sacred space..." or "Welcoming you back..."
+* **Timeout Handling:** After 10s, show "Taking longer than usual" with retry option
+
+**State: Error**
+* **Error Prevention:** Real-time email validation, password strength indicator
+* **Error Messaging:** "That email doesn't look quite right" or "Password needs 8+ characters"
+* **Recovery Path:** Clear error on field focus, inline validation
+
+#### Screen: First-Time Setup
+**User Goal:** Choose their challenge schedule preference
+
+**State: Default**
+* **Layout:** Full-screen with progress indicator (step 1 of 2)
+* **Key Elements:** 
+  - Welcoming headline: "When do you want to reflect?"
+  - Two large selection cards: "Morning only" vs "Morning & Evening"
+  - Visual icons (sunrise vs sunrise+sunset)
+  - "Continue" button (disabled until selection)
+* **Interactions:** Card selection with visual feedback, preview of what each means
+* **Accessibility:** Clear labels, keyboard navigation between options
+
+### Feature: Daily Challenge Experience
+
+#### Screen: Today's Challenge
+**User Goal:** Read today's prompt and record their reflection
+
+**State: Empty/Default (Morning Entry)**
+* **Layout:** 
+  - Top: Minimal header with streak counter and calendar icon
+  - Hero: Today's prompt in large, readable text with soft background
+  - Bottom: Entry area with "Write your reflection" placeholder
+* **Key Elements:**
+  - Day counter: "Day 14 of 100"
+  - Streak flame icon with number
+  - Today's prompt in elegant serif font
+  - Expandable text area for entry
+  - Two CTAs: "Save reflection" (primary) and "Done offline" (secondary)
+* **Interactions:** 
+  - Text area expands as user types
+  - Auto-save indicator after 2 seconds of pause
+  - Swipe right to see yesterday, left for tomorrow (if available)
+* **Accessibility:** 
+  - Minimum 16px font for prompts
+  - High contrast (WCAG AAA)
+  - Voice-to-text support
+
+**State: Loading**
+* **Loading Pattern:** Skeleton screen matching layout, shimmer effect
+* **Feedback:** Previous entry cached for instant display
+* **Timeout Handling:** Show cached version with sync indicator
+
+**State: Success/Populated**
+* **Content Display:** 
+  - Checkmark animation on save
+  - "Reflection saved" toast
+  - If evening enabled: "See you tonight!" message
+* **Secondary Actions:** Edit previous days (via calendar), share streak
+* **Navigation:** Swipe or tap calendar to navigate days
+
+**State: Error**
+* **Error Prevention:** Local storage backup, conflict resolution
+* **Error Messaging:** "Couldn't save - we'll keep trying" with manual retry
+* **Recovery Path:** Queue saves for when connection returns
+
+**State: Edge Cases**
+* **No Internet:** Full offline mode with sync icon
+* **Review Day (Day 7):** Different layout showing past 6 entries in cards
+* **Missed Days:** Gentle "Welcome back!" with option to backfill
+
+#### Screen: Weekly Review
+**User Goal:** Reflect on the past week's journey and identify patterns
+
+**State: Default**
+* **Layout:** Scrollable card view of past 6 days + today's review prompt
+* **Key Elements:**
+  - "Week in Review" header
+  - 6 compact cards showing date, prompt preview, and entry excerpt
+  - Each card expandable to full view
+  - "Add insight" button on each card
+  - Bottom: Overall weekly reflection prompt
+* **Interactions:** 
+  - Tap card to expand and read full entry
+  - Long-press to add highlight (future feature)
+  - Smooth accordion animations
+* **Accessibility:** Clear day labels, expandable regions properly announced
+
+### Feature: Progress Tracking
+
+#### Screen: Progress Calendar
+**User Goal:** See their journey at a glance and navigate to any day
+
+**State: Default**
+* **Layout:** Month view calendar with visual indicators
+* **Key Elements:**
+  - Color coding: Completed (green), Missed (gray), Today (blue), Future (light gray)
+  - Streak counter prominently displayed
+  - Monthly stats: completion rate, total reflections
+  - Motivational message based on performance
+* **Interactions:** 
+  - Tap any completed day to view/edit
+  - Pinch to zoom between month/week view
+  - Swipe between months
+* **Accessibility:** Status announced for each day, keyboard navigation
+
+---
+
+## Cross-Screen Patterns
+
+### Navigation Architecture
+* **Information Architecture:** 
+  - Primary: Today's challenge (home)
+  - Secondary: Progress (calendar icon)
+  - Tertiary: Profile/Settings (avatar icon)
+* **Navigation Patterns:** Bottom tab bar on mobile, sidebar on desktop
+* **Deep Linking:** Each day has unique URL for sharing/bookmarking
+
+### Interaction Patterns
+* **Form Design:** 
+  - Single field focus (email, then password)
+  - Inline validation with positive feedback
+  - Clear CTAs with loading states
+* **Data Entry:** 
+  - Growing text area
+  - Character count only shown near limit
+  - Auto-save with subtle indicator
+* **Content Actions:** 
+  - Swipe gestures for day navigation
+  - Long-press for additional options
+  - Pull-to-refresh for sync
+
+### Responsive Behavior
+* **Mobile (320-768px):** 
+  - Single column layout
+  - Bottom navigation
+  - Full-screen entry mode
+  - Thumb-reachable CTAs
+* **Tablet (768-1024px):** 
+  - Prompt and entry side-by-side in landscape
+  - Floating action buttons
+  - Multi-day view in calendar
+* **Desktop (1024px+):** 
+  - Centered content max-width 800px
+  - Keyboard shortcuts (Cmd+S to save)
+  - Hover states for all interactive elements
+  - Split view: prompt left, entry right
+
+---
+
+## Accessibility & Inclusive Design
+
+### Core Accessibility Features
+* **Visual:** 
+  - Minimum contrast 7:1 for body text
+  - System font size support
+  - Dark mode that maintains contrast
+  - Focus indicators on all interactive elements
+* **Motor:** 
+  - 44px minimum touch targets
+  - Gesture alternatives for all actions
+  - Keyboard navigation throughout
+  - No time-based interactions
+* **Cognitive:** 
+  - Simple language in UI copy
+  - Consistent patterns across screens
+  - Undo functionality for destructive actions
+  - Clear progress indicators
+* **Screen Readers:** 
+  - Semantic HTML structure
+  - ARIA labels for icons
+  - Announce state changes
+  - Skip navigation links
+
+### Inclusive Design Considerations
+* **Slow Internet:** 
+  - Offline-first architecture
+  - Progressive loading
+  - Cached content display
+* **Older Devices:** 
+  - CSS-only animations
+  - Reduced motion option
+  - Lightweight assets
+* **Different Abilities:** 
+  - Voice input support
+  - "Done offline" respects paper journaling
+  - Adjustable reminder times
+
+---
+
+## Design System Components
+
+### Core Components Needed
+* **Buttons:** 
+  - Primary: Brand Blue Solide with white text (Save, Continue)
+  - Secondary: White with Brand Blue border (Done offline, Skip)
+  - Destructive: Brand Red text, no background (Delete)
+  - Loading: Spinner replacing text
+* **Forms:** 
+  - Input fields with floating labels
+  - Growing textarea with character count
+  - Error states with red accent and icon
+  - Success states with green checkmark
+* **Navigation:** 
+  - Bottom tabs with badge for streak
+  - Header with blur background
+  - Breadcrumbs for desktop
+* **Content:** 
+  - Prompt cards with gradient backgrounds
+  - Entry cards with excerpt and date
+  - Calendar with status indicators
+  - Progress rings for completion stats
+* **Feedback:** 
+  - Toast notifications (bottom on mobile, top-right desktop)
+  - Modal dialogs for confirmations
+  - Inline success animations
+  - Loading skeletons
+
+### Component Specifications
+* **Typography Scale:** 
+  - Display: 32px/40px (day numbers)
+  - H1: 24px/32px (screen titles)
+  - H2: 20px/28px (prompts)
+  - Body: 16px/24px (entries)
+  - Caption: 14px/20px (metadata)
+* **Color Palette:** 
+  - Primary: #0498db (Brand Blue)
+  - Secondary: #0498db (Brand Teal)
+  - Dark: #163338 (Brand Dark)
+  - Success: #17bf63 (Brand Green)
+  - Error: #d2042d (Brand Red)
+  - Card: #f7f8f8
+* **Spacing System:** 
+  - Base: 4px
+  - Scale: 4, 8, 12, 16, 24, 32, 48, 64
+  - Consistent padding: 16px mobile, 24px desktop
+* **Animation Guidelines:** 
+  - Micro-interactions: 200ms ease-out
+  - Page transitions: 300ms ease-in-out
+  - Loading states: 400ms fadeIn
+  - Respect prefers-reduced-motion
+
+---
+
+## Content Strategy & Microcopy
+
+### Voice & Tone
+* **Brand Personality:** Warm, encouraging, gently spiritual without being preachy
+* **Error Messages:** "Let's try that again" instead of "Error occurred"
+* **Empty States:** "Your journey begins here ✨" with clear CTA
+* **Success Messages:** "Beautiful reflection!" or "Another day stronger 🔥"
+
+### Key Content Areas
+* **Onboarding:** 
+  - "Welcome to your spiritual journey"
+  - "Choose what works for your life"
+  - "You can change this anytime"
+* **Core Flows:** 
+  - Button: "Save reflection" not "Submit"
+  - Placeholder: "What's on your heart today?"
+  - Help: "Take your time. There's no right or wrong."
+* **Error Recovery:** 
+  - "Looks like we're offline. We'll save this when you're back!"
+  - "Having trouble? Your reflection is safe in drafts."
+
+---
+
+## User Testing & Validation Plan
+
+### Prototype Testing
+* **Key Scenarios:** 
+  1. First-time user completes day 1
+  2. Returning user on day 7 (review)
+  3. User returns after missing 3 days
+* **Success Metrics:** 
+  - Task completion: 95%+ complete day 1
+  - Time to complete: <3 minutes for daily entry
+  - Error rate: <1 error per session
+* **Testing Methods:** 
+  - 5 moderated sessions with target users
+  - A/B test onboarding flow
+  - Analytics on drop-off points
+
+### A/B Testing Opportunities
+* **Onboarding Flow:** 
+  - Immediate challenge start vs tour first
+  - Morning/evening choice upfront vs day 2
+* **Core Feature UI:** 
+  - Prompt at top vs writing space at top
+  - Auto-save vs manual save button
+* **Conversion Points:** 
+  - Streak celebration styles
+  - Review day prompts
+  - Missed day messaging
+
+---
+
+#Stage 4: Detailed Technical Specifications**.
+
+## Project Structure
+
+### Frontend Repository
+```
+frontend/
+├── src/
+│   ├── components/
+│   │   ├── common/
+│   │   │   ├── Button/
+│   │   │   ├── Card/
+│   │   │   ├── Input/
+│   │   │   ├── TextArea/
+│   │   │   └── Toast/
+│   │   ├── forms/
+│   │   │   ├── AuthForm/
+│   │   │   ├── EntryForm/
+│   │   │   └── OnboardingForm/
+│   │   └── navigation/
+│   │       ├── BottomNav/
+│   │       ├── Header/
+│   │       └── DesktopSidebar/
+│   ├── screens/
+│   │   ├── auth/
+│   │   │   ├── LoginScreen.tsx
+│   │   │   └── OnboardingScreen.tsx
+│   │   ├── challenge/
+│   │   │   ├── TodayScreen.tsx
+│   │   │   ├── ReviewScreen.tsx
+│   │   │   └── CalendarScreen.tsx
+│   │   └── profile/
+│   │       └── SettingsScreen.tsx
+│   ├── services/
+│   │   ├── api/
+│   │   │   ├── challenges.ts
+│   │   │   ├── entries.ts
+│   │   │   └── progress.ts
+│   │   ├── auth/
+│   │   │   └── supabase.ts
+│   │   └── storage/
+│   │       └── localStorage.ts
+│   ├── utils/
+│   │   ├── dates.ts
+│   │   ├── validators.ts
+│   │   └── formatters.ts
+│   ├── constants/
+│   │   ├── routes.ts
+│   │   └── config.ts
+│   ├── types/
+│   │   ├── database.ts
+│   │   ├── api.ts
+│   │   └── ui.ts
+│   └── hooks/
+│       ├── useAuth.ts
+│       ├── useChallenge.ts
+│       ├── useAutoSave.ts
+│       └── useOffline.ts
+├── public/
+│   ├── icons/
+│   └── images/
+├── __tests__/
+│   ├── unit/
+│   ├── integration/
+│   └── e2e/
+└── docs/
+    ├── setup.md
+    └── deployment.md
+```
+
+### Backend Repository
+```
+backend/
+├── supabase/
+│   ├── migrations/
+│   │   ├── 001_initial_schema.sql
+│   │   ├── 002_auth_policies.sql
+│   │   └── 003_seed_challenges.sql
+│   ├── functions/
+│   │   ├── calculate-streak/
+│   │   └── daily-reminder/
+│   └── seed.sql
+├── scripts/
+│   ├── backup.ts
+│   └── migrate.ts
+└── docs/
+    └── database-schema.md
+```
+
+---
+
+## Database Design
+
+### Core Tables
+
+#### Users Table
+```sql
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT auth.uid(),
+    email VARCHAR(255) UNIQUE NOT NULL,
+    display_name VARCHAR(100),
+    avatar_url TEXT,
+    onboarding_completed BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- RLS Policies
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own profile" ON users
+    FOR SELECT USING (auth.uid() = id);
+
+CREATE POLICY "Users can update own profile" ON users
+    FOR UPDATE USING (auth.uid() = id);
+
+-- Indexes
+CREATE INDEX idx_users_email ON users(email);
+```
+
+#### Challenges Table
+```sql
+CREATE TABLE challenges (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    total_days INTEGER NOT NULL DEFAULT 100,
+    category VARCHAR(50),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Indexes
+CREATE INDEX idx_challenges_active ON challenges(is_active);
+CREATE INDEX idx_challenges_category ON challenges(category);
+```
+
+#### Challenge Prompts Table
+```sql
+CREATE TABLE challenge_prompts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    challenge_id UUID NOT NULL REFERENCES challenges(id) ON DELETE CASCADE,
+    day_number INTEGER NOT NULL,
+    morning_prompt TEXT NOT NULL,
+    evening_prompt TEXT,
+    guidance_text TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(challenge_id, day_number)
+);
+
+-- Indexes
+CREATE INDEX idx_prompts_challenge_day ON challenge_prompts(challenge_id, day_number);
+```
+
+#### User Challenges Table
+```sql
+CREATE TABLE user_challenges (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    challenge_id UUID NOT NULL REFERENCES challenges(id) ON DELETE CASCADE,
+    start_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    schedule_type VARCHAR(20) NOT NULL CHECK (schedule_type IN ('morning', 'both')),
+    current_day INTEGER DEFAULT 1,
+    longest_streak INTEGER DEFAULT 0,
+    current_streak INTEGER DEFAULT 0,
+    last_entry_date DATE,
+    completed BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(user_id, challenge_id)
+);
+
+-- RLS Policies
+ALTER TABLE user_challenges ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own challenges" ON user_challenges
+    FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can create own challenges" ON user_challenges
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own challenges" ON user_challenges
+    FOR UPDATE USING (auth.uid() = user_id);
+
+-- Indexes
+CREATE INDEX idx_user_challenges_user ON user_challenges(user_id);
+CREATE INDEX idx_user_challenges_dates ON user_challenges(last_entry_date, current_streak);
+```
+
+#### Challenge Entries Table
+```sql
+CREATE TABLE challenge_entries (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_challenge_id UUID NOT NULL REFERENCES user_challenges(id) ON DELETE CASCADE,
+    day_number INTEGER NOT NULL,
+    morning_entry TEXT,
+    evening_entry TEXT,
+    completed_offline BOOLEAN DEFAULT FALSE,
+    review_notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(user_challenge_id, day_number)
+);
+
+-- RLS Policies
+ALTER TABLE challenge_entries ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own entries" ON challenge_entries
+    FOR SELECT USING (
+        EXISTS (
+            SELECT 1 FROM user_challenges uc 
+            WHERE uc.id = challenge_entries.user_challenge_id 
+            AND uc.user_id = auth.uid()
+        )
+    );
+
+CREATE POLICY "Users can create own entries" ON challenge_entries
+    FOR INSERT WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM user_challenges uc 
+            WHERE uc.id = challenge_entries.user_challenge_id 
+            AND uc.user_id = auth.uid()
+        )
+    );
+
+CREATE POLICY "Users can update own entries" ON challenge_entries
+    FOR UPDATE USING (
+        EXISTS (
+            SELECT 1 FROM user_challenges uc 
+            WHERE uc.id = challenge_entries.user_challenge_id 
+            AND uc.user_id = auth.uid()
+        )
+    );
+
+-- Indexes
+CREATE INDEX idx_entries_user_challenge ON challenge_entries(user_challenge_id);
+CREATE INDEX idx_entries_day ON challenge_entries(day_number);
+CREATE INDEX idx_entries_updated ON challenge_entries(updated_at);
+```
+
+### Database Migrations Strategy
+* **Migration Tool:** Supabase CLI migrations
+* **Migration Naming:** `YYYY_MM_DD_HH_MM_description.sql`
+* **Rollback Strategy:** Each migration paired with down migration
+* **Data Migration:** Separate data migrations from schema changes
+
+---
+
+## API Specifications
+
+### Authentication Endpoints
+
+#### POST /auth/register
+**Purpose:** Create new user account and complete initial setup
+
+**Request Body:**
+```json
+{
+    "email": "user@example.com",
+    "password": "securePassword123",
+    "display_name": "John Doe",
+    "schedule_type": "morning" | "both"
+}
+```
+
+**Response (201):**
+```json
+{
+    "user": {
+        "id": "uuid",
+        "email": "user@example.com",
+        "display_name": "John Doe",
+        "onboarding_completed": true
+    },
+    "session": {
+        "access_token": "jwt_token",
+        "refresh_token": "refresh_token",
+        "expires_at": 1234567890
+    }
+}
+```
+
+**Error Responses:**
+* **400:** `{"error": "INVALID_EMAIL", "message": "Please enter a valid email"}`
+* **409:** `{"error": "EMAIL_EXISTS", "message": "An account with this email already exists"}`
+* **422:** `{"error": "WEAK_PASSWORD", "message": "Password must be at least 8 characters"}`
+
+**Rate Limiting:** 5 requests per minute per IP
+**Authentication:** None required
+
+#### POST /auth/login
+**Purpose:** Authenticate existing user
+
+**Request Body:**
+```json
+{
+    "email": "user@example.com",
+    "password": "securePassword123"
+}
+```
+
+**Response (200):**
+```json
+{
+    "user": {
+        "id": "uuid",
+        "email": "user@example.com",
+        "display_name": "John Doe",
+        "current_challenge": {
+            "id": "uuid",
+            "title": "100 Days of Gratitude",
+            "current_day": 14,
+            "current_streak": 13
+        }
+    },
+    "session": {
+        "access_token": "jwt_token",
+        "refresh_token": "refresh_token",
+        "expires_at": 1234567890
+    }
+}
+```
+
+### Challenge Endpoints
+
+#### GET /api/challenges
+**Purpose:** List available challenges
+
+**Query Parameters:**
+* `category` (optional): Filter by category
+* `active` (optional): Filter active/inactive
+
+**Response (200):**
+```json
+{
+    "challenges": [
+        {
+            "id": "uuid",
+            "title": "100 Days of Gratitude",
+            "description": "Transform your mindset through daily gratitude",
+            "total_days": 100,
+            "category": "mindfulness",
+            "participant_count": 1234
+        }
+    ]
+}
+```
+
+#### POST /api/challenges/:id/start
+**Purpose:** Start a new challenge for user
+
+**Request Body:**
+```json
+{
+    "schedule_type": "morning" | "both"
+}
+```
+
+**Response (201):**
+```json
+{
+    "user_challenge": {
+        "id": "uuid",
+        "challenge_id": "uuid",
+        "start_date": "2024-01-15",
+        "schedule_type": "morning",
+        "current_day": 1
+    }
+}
+```
+
+#### GET /api/challenges/:id/today
+**Purpose:** Get today's prompts and entry status
+
+**Response (200):**
+```json
+{
+    "day_number": 14,
+    "is_review_day": false,
+    "prompts": {
+        "morning": "What are three things you're grateful for this morning?",
+        "evening": "Reflect on one unexpected blessing from today",
+        "guidance": "Take a moment to really feel the gratitude..."
+    },
+    "entries": {
+        "morning": "I'm grateful for my family, health, and...",
+        "evening": null,
+        "completed_offline": false
+    },
+    "progress": {
+        "current_streak": 13,
+        "longest_streak": 13,
+        "completion_rate": 0.93
+    }
+}
+```
+
+### Entry Endpoints
+
+#### POST /api/entries
+**Purpose:** Save or update challenge entry
+
+**Request Body:**
+```json
+{
+    "user_challenge_id": "uuid",
+    "day_number": 14,
+    "entry_type": "morning" | "evening",
+    "content": "Today I'm grateful for...",
+    "completed_offline": false
+}
+```
+
+**Response (200):**
+```json
+{
+    "entry": {
+        "id": "uuid",
+        "day_number": 14,
+        "morning_entry": "Today I'm grateful for...",
+        "evening_entry": null,
+        "updated_at": "2024-01-15T10:30:00Z"
+    },
+    "streak_updated": true,
+    "new_streak": 14
+}
+```
+
+**Auto-save Implementation:**
+```typescript
+// Client-side auto-save hook
+const useAutoSave = (content: string, onSave: Function) => {
+  const [saving, setSaving] = useState(false);
+  const debouncedSave = useMemo(
+    () => debounce(async (text: string) => {
+      setSaving(true);
+      try {
+        await onSave(text);
+      } catch (error) {
+        // Queue for retry
+        queueOfflineSave(text);
+      } finally {
+        setSaving(false);
+      }
+    }, 2000),
+    [onSave]
+  );
+
+  useEffect(() => {
+    if (content) {
+      debouncedSave(content);
+    }
+  }, [content, debouncedSave]);
+
+  return { saving };
+};
+```
+
+#### GET /api/entries/review
+**Purpose:** Get entries for weekly review
+
+**Query Parameters:**
+* `user_challenge_id`: UUID
+* `end_day`: Day number (e.g., 7, 14, 21)
+
+**Response (200):**
+```json
+{
+    "entries": [
+        {
+            "day_number": 8,
+            "date": "2024-01-08",
+            "morning_entry": "Grateful for a new week...",
+            "evening_entry": "Reflected on patience today...",
+            "review_notes": null
+        },
+        // ... 6 more entries
+    ],
+    "review_prompt": "Looking back at this week, what patterns do you notice?"
+}
+```
+
+### Progress Endpoints
+
+#### GET /api/progress/calendar
+**Purpose:** Get calendar view data
+
+**Query Parameters:**
+* `user_challenge_id`: UUID
+* `month`: YYYY-MM format
+
+**Response (200):**
+```json
+{
+    "calendar_data": [
+        {
+            "date": "2024-01-15",
+            "day_number": 14,
+            "status": "completed",
+            "has_morning": true,
+            "has_evening": false
+        }
+    ],
+    "stats": {
+        "total_days_completed": 13,
+        "current_streak": 13,
+        "longest_streak": 13,
+        "completion_rate": 0.93
+    }
+}
+```
+
+---
+
+## Frontend Component Architecture
+
+### Screen Components
+
+#### AuthScreen Component
+**Location:** `src/screens/auth/LoginScreen.tsx`
+
+**Props Interface:**
+```typescript
+interface AuthScreenProps {
+    mode: 'login' | 'register';
+    onAuthSuccess: (user: User, session: Session) => void;
+    redirectTo?: string;
+}
+```
+
+**State Management:**
+```typescript
+interface AuthState {
+    mode: 'login' | 'register';
+    loading: boolean;
+    errors: {
+        email?: string;
+        password?: string;
+        general?: string;
+    };
+    formData: {
+        email: string;
+        password: string;
+        displayName?: string;
+    };
+}
+```
+
+**Key Methods:**
+```typescript
+const AuthScreen: React.FC<AuthScreenProps> = ({ mode, onAuthSuccess }) => {
+    const [state, dispatch] = useReducer(authReducer, initialState);
+    const { signIn, signUp } = useAuth();
+
+    const handleSubmit = async (e: FormEvent) => {
+        e.preventDefault();
+        dispatch({ type: 'SUBMIT_START' });
+
+        try {
+            const validation = validateAuthForm(state.formData);
+            if (!validation.isValid) {
+                dispatch({ type: 'SET_ERRORS', payload: validation.errors });
+                return;
+            }
+
+            const { user, session } = state.mode === 'login' 
+                ? await signIn(state.formData)
+                : await signUp(state.formData);
+
+            onAuthSuccess(user, session);
+        } catch (error) {
+            dispatch({ 
+                type: 'SET_ERRORS', 
+                payload: { general: getErrorMessage(error) } 
+            });
+        }
+    };
+
+    const toggleMode = () => {
+        dispatch({ type: 'TOGGLE_MODE' });
+    };
+
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-white to-blue-50">
+            <Card className="w-full max-w-md p-8">
+                <h1 className="text-2xl font-bold text-center mb-8">
+                    {state.mode === 'login' ? 'Welcome Back' : 'Begin Your Journey'}
+                </h1>
+                
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <Input
+                        type="email"
+                        label="Email"
+                        value={state.formData.email}
+                        onChange={(e) => dispatch({ 
+                            type: 'UPDATE_FIELD', 
+                            payload: { field: 'email', value: e.target.value }
+                        })}
+                        error={state.errors.email}
+                        required
+                    />
+                    
+                    <Input
+                        type="password"
+                        label="Password"
+                        value={state.formData.password}
+                        onChange={(e) => dispatch({ 
+                            type: 'UPDATE_FIELD', 
+                            payload: { field: 'password', value: e.target.value }
+                        })}
+                        error={state.errors.password}
+                        required
+                        minLength={8}
+                    />
+                    
+                    {state.mode === 'register' && (
+                        <Input
+                            type="text"
+                            label="Display Name"
+                            value={state.formData.displayName}
+                            onChange={(e) => dispatch({ 
+                                type: 'UPDATE_FIELD', 
+                                payload: { field: 'displayName', value: e.target.value }
+                            })}
+                            required
+                        />
+                    )}
+                    
+                    {state.errors.general && (
+                        <Alert variant="error">{state.errors.general}</Alert>
+                    )}
+                    
+                    <Button
+                        type="submit"
+                        fullWidth
+                        loading={state.loading}
+                        size="lg"
+                    >
+                        {state.mode === 'login' ? 'Sign In' : 'Create Account'}
+                    </Button>
+                </form>
+                
+                <button
+                    onClick={toggleMode}
+                    className="mt-6 text-center w-full text-blue-600 hover:text-blue-700"
+                >
+                    {state.mode === 'login' 
+                        ? "Don't have an account? Sign up" 
+                        : 'Already have an account? Sign in'}
+                </button>
+            </Card>
+        </div>
+    );
+};
+```
+
+#### TodayScreen Component
+**Location:** `src/screens/challenge/TodayScreen.tsx`
+
+**Component Structure:**
+```typescript
+interface TodayScreenProps {
+    userChallenge: UserChallenge;
+}
+
+const TodayScreen: React.FC<TodayScreenProps> = ({ userChallenge }) => {
+    const [entry, setEntry] = useState<ChallengeEntry | null>(null);
+    const [prompt, setPrompt] = useState<Prompt | null>(null);
+    const [loading, setLoading] = useState(true);
+    const { saving } = useAutoSave(entry?.content, saveEntry);
+    const { isOnline } = useOffline();
+
+    useEffect(() => {
+        loadTodayData();
+    }, [userChallenge.current_day]);
+
+    const loadTodayData = async () => {
+        try {
+            const data = await api.challenges.getToday(userChallenge.id);
+            setPrompt(data.prompts);
+            setEntry(data.entries);
+        } catch (error) {
+            showToast('Unable to load today\'s challenge', 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleEntryChange = (field: 'morning' | 'evening', value: string) => {
+        setEntry(prev => ({
+            ...prev,
+            [field + '_entry']: value
+        }));
+    };
+
+    const handleOfflineComplete = async () => {
+        await api.entries.markOffline(userChallenge.id, userChallenge.current_day);
+        showToast('Marked as completed offline! Keep up the great work 🎉');
+    };
+
+    if (loading) return <LoadingScreen />;
+
+    const isReviewDay = userChallenge.current_day % 7 === 0;
+    if (isReviewDay) return <ReviewScreen userChallenge={userChallenge} />;
+
+    return (
+        <div className="min-h-screen bg-gray-50">
+            <Header>
+                <div className="flex items-center justify-between">
+                    <h1 className="text-lg font-semibold">
+                        Day {userChallenge.current_day} of 100
+                    </h1>
+                    <StreakCounter streak={userChallenge.current_streak} />
+                </div>
+            </Header>
+
+            <main className="px-4 py-6 max-w-2xl mx-auto">
+                {/* Morning Prompt */}
+                <Card className="mb-6">
+                    <div className="p-6">
+                        <h2 className="text-xl font-semibold mb-4">
+                            Morning Reflection
+                        </h2>
+                        <p className="text-gray-700 mb-6 leading-relaxed">
+                            {prompt.morning}
+                        </p>
+                        {prompt.guidance && (
+                            <p className="text-sm text-gray-500 italic mb-6">
+                                {prompt.guidance}
+                            </p>
+                        )}
+                        
+                        <TextArea
+                            placeholder="What's on your heart today?"
+                            value={entry?.morning_entry || ''}
+                            onChange={(e) => handleEntryChange('morning', e.target.value)}
+                            minRows={4}
+                            maxRows={12}
+                            className="w-full"
+                        />
+                        
+                        <div className="mt-4 flex items-center justify-between">
+                            <SaveIndicator saving={saving} isOnline={isOnline} />
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={handleOfflineComplete}
+                            >
+                                Done offline
+                            </Button>
+                        </div>
+                    </div>
+                </Card>
+
+                {/* Evening Prompt (if applicable) */}
+                {userChallenge.schedule_type === 'both' && (
+                    <Card>
+                        <div className="p-6">
+                            <h2 className="text-xl font-semibold mb-4">
+                                Evening Reflection
+                            </h2>
+                            <p className="text-gray-700 mb-6 leading-relaxed">
+                                {prompt.evening}
+                            </p>
+                            
+                            <TextArea
+                                placeholder="Reflect on your day..."
+                                value={entry?.evening_entry || ''}
+                                onChange={(e) => handleEntryChange('evening', e.target.value)}
+                                minRows={4}
+                                maxRows={12}
+                                className="w-full"
+                            />
+                        </div>
+                    </Card>
+                )}
+            </main>
+
+            <BottomNav active="today" />
+        </div>
+    );
+};
+```
+
+---
+
+## Feature Implementation Guides
+
+### Feature: 100-Day Challenge System
+
+#### Goal
+Enable users to participate in structured 100-day challenges with daily prompts, flexible scheduling, and weekly reviews
+
+#### API Integration Points
+* **Primary Endpoint:** `/api/challenges/:id/today`
+* **Dependencies:** Auth service, Entry service, Progress service
+* **Third-party APIs:** None for MVP
+
+#### Detailed Requirements
+
+**Functional Requirements:**
+* User can start only one challenge at a time
+* Daily prompts unlock at midnight user's local time
+* Support morning-only or morning+evening schedules
+* Every 7th day is review day with different UI
+* Entries auto-save after 2 seconds of inactivity
+* Users can mark day as "completed offline"
+* Users can navigate to past days to add/edit entries
+
+**Non-Functional Requirements:**
+* Performance: Page load < 2s, auto-save < 1s
+* Security: All entries encrypted, RLS policies enforced
+* Reliability: Offline support with sync queue
+
+#### Implementation Sequence
+
+**Phase 1: Data Layer**
+1. Create Supabase migrations for all tables
+2. Implement RLS policies for user data isolation
+3. Seed initial 100-day gratitude challenge
+4. Create indexes for performance
+
+```sql
+-- Example seed data for gratitude challenge
+INSERT INTO challenges (title, description, total_days, category) VALUES
+('100 Days of Gratitude', 'Transform your mindset through daily gratitude practice', 100, 'mindfulness');
+
+-- Insert prompts
+INSERT INTO challenge_prompts (challenge_id, day_number, morning_prompt, evening_prompt, guidance_text) VALUES
+((SELECT id FROM challenges WHERE title = '100 Days of Gratitude'), 1, 
+ 'What are three things you''re grateful for this morning?',
+ 'What was the best part of your day?',
+ 'Take a moment to really feel the gratitude in your heart before writing.'),
+-- ... continue for 100 days
+```
+
+**Phase 2: API Layer**
+1. Implement Supabase client with auth
+2. Create API service modules
+3. Add offline queue mechanism
+4. Implement real-time subscriptions
+
+```typescript
+// services/api/challenges.ts
+export const challengeService = {
+    async getToday(userChallengeId: string) {
+        const { data: userChallenge } = await supabase
+            .from('user_challenges')
+            .select('*, challenge:challenges(*)')
+            .eq('id', userChallengeId)
+            .single();
+
+        const dayNumber = calculateCurrentDay(userChallenge.start_date);
+        
+        const { data: prompt } = await supabase
+            .from('challenge_prompts')
+            .select('*')
+            .eq('challenge_id', userChallenge.challenge_id)
+            .eq('day_number', dayNumber)
+            .single();
+
+        const { data: entry } = await supabase
+            .from('challenge_entries')
+            .select('*')
+            .eq('user_challenge_id', userChallengeId)
+            .eq('day_number', dayNumber)
+            .maybeSingle();
+
+        return { 
+            dayNumber, 
+            isReviewDay: dayNumber % 7 === 0,
+            prompt, 
+            entry,
+            progress: await this.calculateProgress(userChallengeId)
+        };
+    },
+
+    async calculateProgress(userChallengeId: string) {
+        // Calculate streaks and completion rate
+        const { data: entries } = await supabase
+            .from('challenge_entries')
+            .select('day_number, created_at')
+            .eq('user_challenge_id', userChallengeId)
+            .order('day_number');
+
+        return calculateStreaks(entries);
+    }
+};
+```
+
+**Phase 3: Frontend Layer**
+1. Create component library with design system
+2. Implement screens with proper routing
+3. Add auto-save and offline support
+4. Implement streak calculations
+
+```typescript
+// hooks/useChallenge.ts
+export const useChallenge = () => {
+    const [userChallenge, setUserChallenge] = useState<UserChallenge | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        loadActiveChallenge();
+        
+        // Subscribe to real-time updates
+        const subscription = supabase
+            .channel('challenge_updates')
+            .on('postgres_changes', {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'user_challenges',
+                filter: `user_id=eq.${user.id}`
+            }, handleChallengeUpdate)
+            .subscribe();
+
+        return () => {
+            subscription.unsubscribe();
+        };
+    }, []);
+
+    const startChallenge = async (challengeId: string, scheduleType: ScheduleType) => {
+        const { data, error } = await supabase
+            .from('user_challenges')
+            .insert({
+                user_id: user.id,
+                challenge_id: challengeId,
+                schedule_type: scheduleType,
+                start_date: new Date().toISOString()
+            })
+            .select()
+            .single();
+
+        if (error) throw error;
+        setUserChallenge(data);
+        return data;
+    };
+
+    return { userChallenge, loading, startChallenge };
+};
+```
+
+**Phase 4: Integration**
+1. Connect all components with proper data flow
+2. Implement comprehensive error handling
+3. Add analytics tracking
+4. Performance optimization
+
+#### Data Flow Pseudocode
+```
+1. User opens app
+2. Check auth status → redirect if needed
+3. Load active challenge or show challenge selection
+4. For today's view:
+   a. Calculate current day based on start_date
+   b. Fetch prompt for day_number
+   c. Check for existing entry
+   d. Render appropriate UI (regular or review day)
+5. User types in text area
+6. Debounced auto-save triggers after 2s
+7. Save to Supabase with conflict resolution
+8. Update streak if new day completed
+9. Show success feedback
+10. If offline, queue save and show offline indicator
+```
+
+#### Edge Cases & Error Handling
+* **Network Failure:** 
+  - Queue entries in IndexedDB
+  - Show offline indicator
+  - Sync when connection returns
+* **Server Errors:** 
+  - Exponential backoff retry
+  - Show user-friendly error messages
+  - Log to Sentry for monitoring
+* **Invalid Data:** 
+  - Client-side validation before save
+  - Server-side validation in RLS
+  - Clear error messages
+* **Timezone Changes:** 
+  - Always use user's local timezone
+  - Recalculate day on timezone change
+  - Handle DST transitions
+
+#### Testing Strategy
+* **Unit Tests:** 
+  - Date calculations
+  - Streak logic
+  - Validation functions
+* **Integration Tests:** 
+  - Supabase operations
+  - Auth flow
+  - Auto-save mechanism
+* **E2E Tests:** 
+  - Complete day 1 flow
+  - Review day flow
+  - Offline → online sync
+* **Performance Tests:** 
+  - 1000 concurrent saves
+  - Large entry text handling
+  - Calendar with 100 days
+
+---
+
+## Security Implementation
+
+### Authentication Flow
+```
+1. User enters email/password
+2. Supabase validates credentials
+3. Supabase returns JWT tokens (access + refresh)
+4. Tokens stored in httpOnly cookies
+5. Next.js middleware validates token on each request
+6. Access token auto-refreshes before expiry
+7. Refresh token rotation on use
+8. Logout clears all tokens
+```
+
+```typescript
+// middleware.ts
+export async function middleware(request: NextRequest) {
+    const { pathname } = request.nextUrl;
+    
+    // Public routes
+    if (pathname.startsWith('/auth') || pathname === '/') {
+        return NextResponse.next();
+    }
+
+    // Validate session
+    const supabase = createMiddlewareClient({ req: request, res: NextResponse.next() });
+    const { data: { session }, error } = await supabase.auth.getSession();
+
+    if (error || !session) {
+        return NextResponse.redirect(new URL('/auth/login', request.url));
+    }
+
+    // Refresh if needed
+    if (isTokenExpiringSoon(session.access_token)) {
+        await supabase.auth.refreshSession();
+    }
+
+    return NextResponse.next();
+}
+```
+
+### Data Protection
+* **Encryption at Rest:** Supabase automatic encryption
+* **Encryption in Transit:** Force TLS 1.3
+* **Input Sanitization:** DOMPurify for user content
+* **SQL Injection Prevention:** Parameterized queries only
+
+```typescript
+// utils/sanitize.ts
+import DOMPurify from 'isomorphic-dompurify';
+
+export const sanitizeEntry = (content: string): string => {
+    return DOMPurify.sanitize(content, {
+        ALLOWED_TAGS: ['p', 'br', 'strong', 'em'],
+        ALLOWED_ATTR: []
+    });
+};
+```
+
+### Access Control
+* **Role-Based Access:** User role only for MVP
+* **Resource Ownership:** RLS policies ensure data isolation
+* **Rate Limiting:** 
+  - Auth: 5 attempts/minute
+  - API: 100 requests/minute
+  - Entries: 60 saves/hour
+
+---
+
+## DevOps & Deployment
+
+### Local Development Setup
+```bash
+# 1. Clone repository
+git clone https://github.com/your-org/challenge-app
+cd challenge-app
+
+# 2. Install dependencies
+npm install
+
+# 3. Setup environment variables
+cp .env.example .env.local
+# Add your Supabase URL and anon key
+
+# 4. Setup Supabase locally
+npx supabase init
+npx supabase start
+npx supabase db reset
+
+# 5. Run development server
+npm run dev
+
+# 6. Run tests
+npm test
+npm run test:e2e
+```
+
+### CI/CD Pipeline
+```yaml
+# .github/workflows/deploy.yml
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - run: npm ci
+      - run: npm test
+      - run: npm run lint
+      - run: npm run type-check
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: vercel/action@v1
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.ORG_ID }}
+          vercel-project-id: ${{ secrets.PROJECT_ID }}
+          vercel-args: '--prod'
+```
+
+### Monitoring & Alerting
+* **Application Monitoring:** 
+  - Vercel Analytics for Web Vitals
+  - Sentry for error tracking
+  - Custom events for key actions
+* **Infrastructure Monitoring:** 
+  - Supabase dashboard for database
+  - Vercel dashboard for functions
+  - Uptime monitoring with Pingdom
+* **User Monitoring:** 
+  - Mixpanel for user analytics
+  - Conversion funnel tracking
+  - Engagement metrics
+* **Alert Thresholds:** 
+  - Error rate > 1% → Slack alert
+  - Response time > 3s → Investigation
+  - Failed logins > 10/min → Security alert
+
