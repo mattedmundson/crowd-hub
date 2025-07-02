@@ -2,27 +2,32 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Menu, X, Github, Twitter, Linkedin, Moon, Sun, User, Settings, LogOut, Instagram, Youtube } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { usePathname } from 'next/navigation';
+import { Menu, X, Instagram, Youtube, ChevronDown, BookOpen, Check, Sun, Moon } from 'lucide-react';
 import { CrowdLogo } from '@/components/icons/crowd-logo';
 import { CrowdChurch } from '@/components/icons/crowd-church';
 import { LivestreamCountdown } from '@/components/livestream-countdown';
-import { useTheme } from 'next-themes';
 import { useUser } from '@/contexts/user-context';
 import { useUserRole } from '@/lib/hooks/useUserRole';
 import { createClient } from '@/lib/supabase/client';
+import { getCurrentChallenge, getTodaysContent } from '@/lib/services/challenges';
+import type { TodaysContent } from '@/lib/services/challenges';
+import type { Database } from '@/lib/types/database';
+
+type UserChallenge = Database['public']['Tables']['user_challenges']['Row'] & {
+  challenge: Database['public']['Tables']['challenges']['Row'];
+};
 
 export function TopNav() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const [isChallengesOpen, setIsChallengesOpen] = useState(false);
   const { user } = useUser();
   const { isAdmin } = useUserRole();
+  const [userChallenge, setUserChallenge] = useState<UserChallenge | null>(null);
+  const [todaysContent, setTodaysContent] = useState<TodaysContent | null>(null);
+  const pathname = usePathname();
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -33,14 +38,69 @@ export function TopNav() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    if (user) {
+      loadChallengeData();
+    }
+  }, [user]); // loadChallengeData is stable, no need to include
+
+  const loadChallengeData = async () => {
+    if (!user) return;
+    
+    try {
+      const currentChallenge = await getCurrentChallenge(user.id);
+      setUserChallenge(currentChallenge);
+      
+      if (currentChallenge) {
+        const content = await getTodaysContent(currentChallenge.id);
+        setTodaysContent(content);
+      }
+    } catch (error) {
+      console.error('Error loading challenge data:', error);
+    }
+  };
+
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
+  };
+
+  const toggleChallenges = () => {
+    setIsChallengesOpen(!isChallengesOpen);
   };
 
   const handleLogout = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
     window.location.href = '/auth/login';
+  };
+
+  // Determine if we should show challenge progress view
+  const showChallengeProgress = (pathname?.includes('/journey') || pathname?.includes('/today')) && userChallenge && todaysContent;
+  
+  // Check completion status for each entry type
+  const hasGodMessage = todaysContent?.entry?.god_message?.trim();
+  const hasMorningEntry = todaysContent?.entry?.morning_entry?.trim();
+  const hasEveningEntry = todaysContent?.entry?.evening_entry?.trim();
+
+  // Journey section navigation (to prompts, not forms)
+  const navigateToSection = (section: 'bible' | 'morning' | 'evening') => {
+    const sectionMap = {
+      bible: 1, // Scripture section (before God's Message form)
+      morning: 4, // Morning prompt section (before Morning Entry form)  
+      evening: 6, // Evening prompt section (before Evening Entry form)
+    };
+    
+    const sectionIndex = sectionMap[section];
+    
+    // If we're already on the journey page, try to scroll directly
+    if (pathname?.includes('/journey')) {
+      const url = `/dashboard/gratitude/journey?section=${sectionIndex}`;
+      window.location.href = url; // Simple approach for now
+    } else {
+      // Navigate to the journey page with the section parameter
+      const url = `/dashboard/gratitude/journey?section=${sectionIndex}`;
+      window.location.href = url;
+    }
   };
 
   return (
@@ -63,20 +123,20 @@ export function TopNav() {
         <nav className={`
           relative
           transition-all duration-300 ease-in-out
-          ${isMenuOpen ? 'bg-[#72bbc6]/95 dark:bg-gray-800/95' : ''}
+          ${isMenuOpen ? 'bg-[#72bbc6]/95' : ''}
           backdrop-blur-md shadow-lg
           rounded-[40px]
         `}>
           {/* Main Nav Bar */}
           <div className={`
             relative z-10
-            bg-[#21252D]/95 dark:bg-gray-900/95 
+            bg-[#21252D]/95 
             backdrop-blur-md shadow-md
             rounded-[40px]
             transition-all duration-500 ease-in-out
             ${isScrolled 
-              ? 'md:bg-[#21252D]/90 dark:md:bg-gray-900/90 md:shadow-lg md:border md:border-[#21252D]/20 dark:md:border-gray-800/20' 
-              : 'md:bg-[#21252D]/95 dark:md:bg-gray-900/95 md:shadow-md'
+              ? 'md:bg-[#21252D]/90 md:shadow-lg md:border md:border-[#21252D]/20' 
+              : 'md:bg-[#21252D]/95 md:shadow-md'
             }
           `}>
             {/* Navigation Header */}
@@ -91,26 +151,148 @@ export function TopNav() {
 
               {/* Center Navigation */}
               <div className="hidden md:flex items-center space-x-8">
-                <Link 
-                  href="/dashboard/gratitude" 
-                  className="font-bold text-[#7DB9C5]/90 hover:text-[#7DB9C5] transition-colors"
-                >
-                  Gratitude Challenge
-                </Link>
-                <Link 
-                  href="/live-stream" 
-                  className="font-bold text-[#7DB9C5]/90 hover:text-[#7DB9C5] transition-colors"
-                >
-                  Live Stream
-                </Link>
-                {mounted && (
-                  <button
-                    onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                    className="font-bold text-[#7DB9C5]/90 hover:text-[#7DB9C5] transition-colors flex items-center gap-2"
-                  >
-                    {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                    Mode
-                  </button>
+                {showChallengeProgress ? (
+                  /* Challenge Progress View */
+                  <>
+                    {/* Challenge Name + Day (Clickable for dropdown) */}
+                    <div className="relative">
+                      <button
+                        onClick={toggleChallenges}
+                        className="font-bold text-[#7DB9C5]/90 hover:text-[#7DB9C5] transition-colors flex items-center gap-2"
+                      >
+                        <span className="text-white font-medium">
+                          {userChallenge?.challenge?.title || 'Gratitude Challenge'}
+                        </span>
+                        <span className="text-white/70">•</span>
+                        <span className="text-white/70 text-sm">
+                          Day {todaysContent?.dayNumber}
+                        </span>
+                        <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isChallengesOpen ? 'rotate-180' : ''}`} />
+                      </button>
+                      
+                      {/* Challenges Dropdown */}
+                      <div className={`
+                        absolute top-full left-0 mt-2 w-80 z-50
+                        bg-[#21252D]/95 backdrop-blur-md
+                        rounded-[20px] shadow-lg border border-[#21252D]/20
+                        transition-all duration-300 ease-in-out origin-top
+                        ${isChallengesOpen ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'}
+                      `}>
+                        <div className="p-4">
+                          <Link
+                            href="/dashboard/gratitude/journey"
+                            onClick={() => setIsChallengesOpen(false)}
+                            className="block p-4 rounded-[12px] hover:bg-[#7DB9C5]/10 transition-colors group"
+                          >
+                            <div className="text-[#7DB9C5] font-semibold text-lg mb-1 group-hover:text-[#7DB9C5]">
+                              {userChallenge?.challenge?.title || 'Gratitude Challenge'}
+                            </div>
+                            <div className="text-white/70 text-sm">
+                              Day {todaysContent?.dayNumber}
+                            </div>
+                          </Link>
+                          <div className="p-4 text-center">
+                            <div className="text-white/70 text-xs">
+                              Switch to different challenge (coming soon)
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Progress Icons */}
+                    <div className="flex items-center space-x-4">
+                      {/* Bible/God's Message Icon */}
+                      <button
+                        onClick={() => navigateToSection('bible')}
+                        className="relative p-2 rounded-full hover:bg-[#7DB9C5]/10 transition-colors group"
+                        title="Bible reflection"
+                      >
+                        <BookOpen className="h-5 w-5 text-[#7DB9C5]/90 group-hover:text-[#7DB9C5]" />
+                        {hasGodMessage && (
+                          <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-0.5">
+                            <Check className="h-3 w-3 text-white" />
+                          </div>
+                        )}
+                      </button>
+
+                      {/* Morning Icon */}
+                      <button
+                        onClick={() => navigateToSection('morning')}
+                        className="relative p-2 rounded-full hover:bg-[#7DB9C5]/10 transition-colors group"
+                        title="Morning reflection"
+                      >
+                        <Sun className="h-5 w-5 text-[#7DB9C5]/90 group-hover:text-[#7DB9C5]" />
+                        {hasMorningEntry && (
+                          <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-0.5">
+                            <Check className="h-3 w-3 text-white" />
+                          </div>
+                        )}
+                      </button>
+
+                      {/* Evening Icon */}
+                      <button
+                        onClick={() => navigateToSection('evening')}
+                        className="relative p-2 rounded-full hover:bg-[#7DB9C5]/10 transition-colors group"
+                        title="Evening reflection"
+                      >
+                        <Moon className="h-5 w-5 text-[#7DB9C5]/90 group-hover:text-[#7DB9C5]" />
+                        {hasEveningEntry && (
+                          <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-0.5">
+                            <Check className="h-3 w-3 text-white" />
+                          </div>
+                        )}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  /* Default Active Challenges View */
+                  <div className="relative">
+                    <button
+                      onClick={toggleChallenges}
+                      className="font-bold text-[#7DB9C5]/90 hover:text-[#7DB9C5] transition-colors flex items-center gap-2"
+                    >
+                      Active Challenges
+                      <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isChallengesOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                    
+                    {/* Challenges Dropdown */}
+                    <div className={`
+                      absolute top-full left-0 mt-2 w-80 z-50
+                      bg-[#21252D]/95 backdrop-blur-md
+                      rounded-[20px] shadow-lg border border-[#21252D]/20
+                      transition-all duration-300 ease-in-out origin-top
+                      ${isChallengesOpen ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'}
+                    `}>
+                      <div className="p-4">
+                        {userChallenge && todaysContent ? (
+                          <Link
+                            href="/dashboard/gratitude/journey"
+                            onClick={() => setIsChallengesOpen(false)}
+                            className="block p-4 rounded-[12px] hover:bg-[#7DB9C5]/10 transition-colors group"
+                          >
+                            <div className="text-[#7DB9C5] font-semibold text-lg mb-1 group-hover:text-[#7DB9C5]">
+                              {userChallenge.challenge?.title || 'Gratitude Challenge'}
+                            </div>
+                            <div className="text-white/70 text-sm">
+                              Day {todaysContent.dayNumber}
+                            </div>
+                          </Link>
+                        ) : (
+                          <div className="p-4 text-center">
+                            <div className="text-white/70 text-sm mb-2">No active challenges</div>
+                            <Link
+                              href="/dashboard/gratitude"
+                              onClick={() => setIsChallengesOpen(false)}
+                              className="text-[#7DB9C5] hover:text-[#7DB9C5]/80 text-sm font-medium"
+                            >
+                              Start a challenge →
+                            </Link>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
 
@@ -181,31 +363,23 @@ export function TopNav() {
                         <div className="space-y-4 md:space-y-3">
                           {/* Mobile Nav Items - Only show on mobile */}
                           <div className="md:hidden space-y-4 mb-6">
-                            <Link 
-                              href="/dashboard/gratitude" 
-                              className="block text-white/90 hover:text-[#21252D] transition-colors text-2xl py-2"
-                              onClick={toggleMenu}
-                            >
-                              Gratitude Challenge
-                            </Link>
-                            <Link 
-                              href="/live-stream" 
-                              className="block text-white/90 hover:text-[#21252D] transition-colors text-2xl py-2"
-                              onClick={toggleMenu}
-                            >
-                              Live Stream
-                            </Link>
-                            {mounted && (
-                              <button
-                                onClick={() => {
-                                  setTheme(theme === 'dark' ? 'light' : 'dark');
-                                  toggleMenu();
-                                }}
-                                className="block text-white/90 hover:text-[#21252D] transition-colors w-full text-left text-2xl flex items-center gap-3 py-2"
+                            {userChallenge && todaysContent ? (
+                              <Link 
+                                href="/dashboard/gratitude/journey" 
+                                className="block text-white/90 hover:text-[#21252D] transition-colors text-2xl py-2"
+                                onClick={toggleMenu}
                               >
-                                {theme === 'dark' ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />}
-                                Mode
-                              </button>
+                                {userChallenge.challenge?.title || 'Gratitude Challenge'}
+                                <div className="text-white/70 text-sm">Day {todaysContent.dayNumber}</div>
+                              </Link>
+                            ) : (
+                              <Link 
+                                href="/dashboard/gratitude" 
+                                className="block text-white/90 hover:text-[#21252D] transition-colors text-2xl py-2"
+                                onClick={toggleMenu}
+                              >
+                                Start Challenge
+                              </Link>
                             )}
                             
                             {/* Separator for mobile */}

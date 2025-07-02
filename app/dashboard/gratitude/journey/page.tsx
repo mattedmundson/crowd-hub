@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { getTodaysContent, getCurrentChallenge } from '@/lib/services/challenges';
 import { saveEntry } from '@/lib/services/entries';
 import { createClient } from '@/lib/supabase/client';
 import { useUserRole } from '@/lib/hooks/useUserRole';
 import { Edit2 } from 'lucide-react';
 import { HundredDayGrid } from '@/components/challenge/hundred-day-grid';
+import { MinimalWriter } from '@/components/journey/minimal-writer';
 import type { TodaysContent } from '@/lib/services/challenges';
 import type { Database } from '@/lib/types/database';
 
@@ -17,6 +18,7 @@ type UserChallenge = Database['public']['Tables']['user_challenges']['Row'] & {
 
 export default function JourneyPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [userChallenge, setUserChallenge] = useState<UserChallenge | null>(null);
   const [todaysContent, setTodaysContent] = useState<TodaysContent | null>(null);
   const [loading, setLoading] = useState(true);
@@ -47,6 +49,19 @@ export default function JourneyPage() {
   useEffect(() => {
     loadData();
   }, []);
+
+
+  // Handle section navigation from URL parameters
+  useEffect(() => {
+    const sectionParam = searchParams?.get('section');
+    if (sectionParam && !loading) {
+      const sectionIndex = parseInt(sectionParam, 10);
+      if (!isNaN(sectionIndex) && sectionIndex >= 0 && sectionIndex <= 12) {
+        // Delay to ensure the page is fully loaded
+        setTimeout(() => scrollToSection(sectionIndex), 500);
+      }
+    }
+  }, [searchParams, loading]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -182,69 +197,48 @@ export default function JourneyPage() {
   const handleSaveGodMessage = async () => {
     if (!userChallenge || !todaysContent || !godMessage.trim()) return;
     
-    try {
-      await saveEntry({
-        userChallengeId: userChallenge.id,
-        dayNumber: todaysContent.dayNumber,
-        entryType: 'god_message',
-        content: godMessage,
-      });
-      
-      // Continue to morning reflection section (section 4)
-      scrollToSection(4);
-      
-      // Refresh completed days
-      if (userChallenge) {
-        await loadCompletedDays(userChallenge.id);
-      }
-    } catch (error) {
-      console.error('Error saving God message:', error);
+    await saveEntry({
+      userChallengeId: userChallenge.id,
+      dayNumber: todaysContent.dayNumber,
+      entryType: 'god_message',
+      content: godMessage,
+    });
+    
+    // Refresh completed days
+    if (userChallenge) {
+      await loadCompletedDays(userChallenge.id);
     }
   };
 
   const handleSaveMorningEntry = async () => {
     if (!userChallenge || !todaysContent || !morningEntry.trim()) return;
     
-    try {
-      await saveEntry({
-        userChallengeId: userChallenge.id,
-        dayNumber: todaysContent.dayNumber,
-        entryType: 'morning',
-        content: morningEntry,
-      });
-      
-      // Continue to evening reflection section (section 6)
-      scrollToSection(6);
-      
-      // Refresh completed days
-      if (userChallenge) {
-        await loadCompletedDays(userChallenge.id);
-      }
-    } catch (error) {
-      console.error('Error saving morning entry:', error);
+    await saveEntry({
+      userChallengeId: userChallenge.id,
+      dayNumber: todaysContent.dayNumber,
+      entryType: 'morning',
+      content: morningEntry,
+    });
+    
+    // Refresh completed days
+    if (userChallenge) {
+      await loadCompletedDays(userChallenge.id);
     }
   };
 
   const handleSaveEveningEntry = async () => {
     if (!userChallenge || !todaysContent || !eveningEntry.trim()) return;
     
-    try {
-      await saveEntry({
-        userChallengeId: userChallenge.id,
-        dayNumber: todaysContent.dayNumber,
-        entryType: 'evening',
-        content: eveningEntry,
-      });
-      
-      // Continue to completion screen (section 8)
-      scrollToSection(8);
-      
-      // Refresh completed days
-      if (userChallenge) {
-        await loadCompletedDays(userChallenge.id);
-      }
-    } catch (error) {
-      console.error('Error saving evening entry:', error);
+    await saveEntry({
+      userChallengeId: userChallenge.id,
+      dayNumber: todaysContent.dayNumber,
+      entryType: 'evening',
+      content: eveningEntry,
+    });
+    
+    // Refresh completed days
+    if (userChallenge) {
+      await loadCompletedDays(userChallenge.id);
     }
   };
 
@@ -415,43 +409,15 @@ export default function JourneyPage() {
       {/* Section 4: God's Message Form */}
       <section 
         ref={(el) => sectionsRef.current[3] = el}
-        className="min-h-screen flex items-center justify-center px-6"
+        className="min-h-screen"
       >
-        <div className="max-w-4xl mx-auto w-full space-y-8">
-          <div className="text-center space-y-6">
-            <h2 className="text-3xl md:text-4xl font-light text-foreground">
-              What is God saying to you?
-            </h2>
-            <p className="text-lg md:text-xl text-muted-foreground">
-              Take a moment to listen to your heart. What do you sense God might be speaking to you through this scripture?
-            </p>
-          </div>
-          
-          <div className="space-y-6">
-            <textarea
-              value={godMessage}
-              onChange={(e) => setGodMessage(e.target.value)}
-              placeholder="What is God speaking to your heart about this scripture?"
-              className="w-full h-64 p-6 text-lg rounded-lg border border-border bg-background/50 backdrop-blur resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-            />
-            
-            <div className="flex justify-center space-x-4">
-              <button
-                onClick={() => scrollToSection(4)}
-                className="px-8 py-3 text-lg font-medium text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Skip for now
-              </button>
-              <button
-                onClick={handleSaveGodMessage}
-                disabled={!godMessage.trim()}
-                className="px-8 py-3 text-lg font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-              >
-                Continue Journey
-              </button>
-            </div>
-          </div>
-        </div>
+        <MinimalWriter
+          value={godMessage}
+          onChange={setGodMessage}
+          onSave={handleSaveGodMessage}
+          onNext={() => scrollToSection(4)}
+          placeholder="What is God speaking to your heart about this scripture?"
+        />
       </section>
 
       {/* Section 5: Morning Reflection Prompt */}
@@ -486,43 +452,15 @@ export default function JourneyPage() {
       {/* Section 6: Morning Entry Form */}
       <section 
         ref={(el) => sectionsRef.current[5] = el}
-        className="min-h-screen flex items-center justify-center px-6"
+        className="min-h-screen"
       >
-        <div className="max-w-4xl mx-auto w-full space-y-8">
-          <div className="text-center space-y-6">
-            <h2 className="text-3xl md:text-4xl font-light text-foreground">
-              Your Morning Reflection
-            </h2>
-            <p className="text-lg md:text-xl text-muted-foreground">
-              What's on your heart today? Share your thoughts and gratitude...
-            </p>
-          </div>
-          
-          <div className="space-y-6">
-            <textarea
-              value={morningEntry}
-              onChange={(e) => setMorningEntry(e.target.value)}
-              placeholder="What's on your heart today? Share your thoughts and gratitude..."
-              className="w-full h-64 p-6 text-lg rounded-lg border border-border bg-background/50 backdrop-blur resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-            />
-            
-            <div className="flex justify-center space-x-4">
-              <button
-                onClick={() => scrollToSection(6)}
-                className="px-8 py-3 text-lg font-medium text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Skip for now
-              </button>
-              <button
-                onClick={handleSaveMorningEntry}
-                disabled={!morningEntry.trim()}
-                className="px-8 py-3 text-lg font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-              >
-                Continue Journey
-              </button>
-            </div>
-          </div>
-        </div>
+        <MinimalWriter
+          value={morningEntry}
+          onChange={setMorningEntry}
+          onSave={handleSaveMorningEntry}
+          onNext={() => scrollToSection(6)}
+          placeholder="What's on your heart today? Share your thoughts and gratitude..."
+        />
       </section>
 
       {/* Section 7: Evening Reflection Prompt */}
@@ -557,43 +495,15 @@ export default function JourneyPage() {
       {/* Section 8: Evening Entry Form */}
       <section 
         ref={(el) => sectionsRef.current[7] = el}
-        className="min-h-screen flex items-center justify-center px-6"
+        className="min-h-screen"
       >
-        <div className="max-w-4xl mx-auto w-full space-y-8">
-          <div className="text-center space-y-6">
-            <h2 className="text-3xl md:text-4xl font-light text-foreground">
-              Your Evening Reflection
-            </h2>
-            <p className="text-lg md:text-xl text-muted-foreground">
-              As you reflect on your day, what are you grateful for?
-            </p>
-          </div>
-          
-          <div className="space-y-6">
-            <textarea
-              value={eveningEntry}
-              onChange={(e) => setEveningEntry(e.target.value)}
-              placeholder="As you reflect on your day, what are you grateful for?"
-              className="w-full h-64 p-6 text-lg rounded-lg border border-border bg-background/50 backdrop-blur resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-            />
-            
-            <div className="flex justify-center space-x-4">
-              <button
-                onClick={() => scrollToSection(8)}
-                className="px-8 py-3 text-lg font-medium text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Skip for now
-              </button>
-              <button
-                onClick={handleSaveEveningEntry}
-                disabled={!eveningEntry.trim()}
-                className="px-8 py-3 text-lg font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-              >
-                Complete Journey
-              </button>
-            </div>
-          </div>
-        </div>
+        <MinimalWriter
+          value={eveningEntry}
+          onChange={setEveningEntry}
+          onSave={handleSaveEveningEntry}
+          onNext={() => scrollToSection(8)}
+          placeholder="As you reflect on your day, what are you grateful for?"
+        />
       </section>
 
       {/* Section 9: Bible Verse Recap */}
@@ -657,7 +567,7 @@ export default function JourneyPage() {
             What you wrote about this verse...
           </p>
           {godMessage && (
-            <div className="text-xl md:text-2xl leading-relaxed text-left bg-muted/20 rounded-lg p-10" style={{ color: '#0498db' }}>
+            <div className="text-xl md:text-2xl leading-relaxed text-left" style={{ color: '#0498db' }}>
               {godMessage.split('\n').map((paragraph, index) => (
                 <p key={index} className={index > 0 ? 'mt-5' : ''}>
                   {paragraph}
@@ -689,7 +599,7 @@ export default function JourneyPage() {
             What you wrote this morning...
           </p>
           {morningEntry && (
-            <div className="text-xl md:text-2xl leading-relaxed text-left bg-muted/20 rounded-lg p-10" style={{ color: '#0498db' }}>
+            <div className="text-xl md:text-2xl leading-relaxed text-left" style={{ color: '#0498db' }}>
               {morningEntry.split('\n').map((paragraph, index) => (
                 <p key={index} className={index > 0 ? 'mt-5' : ''}>
                   {paragraph}
@@ -721,7 +631,7 @@ export default function JourneyPage() {
             What you wrote this evening...
           </p>
           {eveningEntry && (
-            <div className="text-xl md:text-2xl leading-relaxed text-left bg-muted/20 rounded-lg p-10" style={{ color: '#0498db' }}>
+            <div className="text-xl md:text-2xl leading-relaxed text-left" style={{ color: '#0498db' }}>
               {eveningEntry.split('\n').map((paragraph, index) => (
                 <p key={index} className={index > 0 ? 'mt-5' : ''}>
                   {paragraph}

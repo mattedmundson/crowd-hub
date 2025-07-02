@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Open_Sans } from "next/font/google";
-import { ThemeProvider } from "next-themes";
 import { UserProvider } from "@/contexts/user-context";
+import { ThemeProvider } from "@/contexts/theme-context";
 import "./globals.css";
 
 const defaultUrl = process.env.VERCEL_URL
@@ -33,12 +33,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${openSans.variable} font-sans antialiased`}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
+        <ThemeProvider>
           <UserProvider>
             {children}
           </UserProvider>
