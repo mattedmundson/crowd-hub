@@ -15,6 +15,9 @@ export interface Database {
           title: string
           description: string | null
           total_days: number
+          total_challenges: number
+          theme: string
+          weekly_schedule: boolean
           category: string | null
           is_active: boolean
           created_at: string
@@ -25,6 +28,9 @@ export interface Database {
           title: string
           description?: string | null
           total_days?: number
+          total_challenges?: number
+          theme?: string
+          weekly_schedule?: boolean
           category?: string | null
           is_active?: boolean
           created_at?: string
@@ -35,6 +41,9 @@ export interface Database {
           title?: string
           description?: string | null
           total_days?: number
+          total_challenges?: number
+          theme?: string
+          weekly_schedule?: boolean
           category?: string | null
           is_active?: boolean
           created_at?: string
@@ -46,7 +55,7 @@ export interface Database {
         Row: {
           id: string
           challenge_id: string
-          day_number: number
+          challenge_number: number
           scripture_reference: string | null
           scripture_text: string | null
           context_text: string | null
@@ -57,7 +66,7 @@ export interface Database {
         Insert: {
           id?: string
           challenge_id: string
-          day_number: number
+          challenge_number: number
           scripture_reference?: string | null
           scripture_text?: string | null
           context_text?: string | null
@@ -68,7 +77,7 @@ export interface Database {
         Update: {
           id?: string
           challenge_id?: string
-          day_number?: number
+          challenge_number?: number
           scripture_reference?: string | null
           scripture_text?: string | null
           context_text?: string | null
@@ -93,7 +102,12 @@ export interface Database {
           challenge_id: string
           start_date: string
           schedule_type: 'morning' | 'both'
-          current_day: number
+          legacy_current_day: number
+          current_challenge_number: number
+          total_completed: number
+          weekly_review_day: number
+          last_challenge_date: string | null
+          weekly_goal: number
           longest_streak: number
           current_streak: number
           last_entry_date: string | null
@@ -107,7 +121,12 @@ export interface Database {
           challenge_id: string
           start_date?: string
           schedule_type: 'morning' | 'both'
-          current_day?: number
+          legacy_current_day?: number
+          current_challenge_number?: number
+          total_completed?: number
+          weekly_review_day?: number
+          last_challenge_date?: string | null
+          weekly_goal?: number
           longest_streak?: number
           current_streak?: number
           last_entry_date?: string | null
@@ -121,7 +140,12 @@ export interface Database {
           challenge_id?: string
           start_date?: string
           schedule_type?: 'morning' | 'both'
-          current_day?: number
+          legacy_current_day?: number
+          current_challenge_number?: number
+          total_completed?: number
+          weekly_review_day?: number
+          last_challenge_date?: string | null
+          weekly_goal?: number
           longest_streak?: number
           current_streak?: number
           last_entry_date?: string | null
@@ -150,7 +174,7 @@ export interface Database {
         Row: {
           id: string
           user_challenge_id: string
-          day_number: number
+          challenge_number: number
           god_message: string | null
           morning_entry: string | null
           evening_entry: string | null
@@ -162,7 +186,7 @@ export interface Database {
         Insert: {
           id?: string
           user_challenge_id: string
-          day_number: number
+          challenge_number: number
           god_message?: string | null
           morning_entry?: string | null
           evening_entry?: string | null
@@ -174,7 +198,7 @@ export interface Database {
         Update: {
           id?: string
           user_challenge_id?: string
-          day_number?: number
+          challenge_number?: number
           god_message?: string | null
           morning_entry?: string | null
           evening_entry?: string | null
@@ -186,6 +210,77 @@ export interface Database {
         Relationships: [
           {
             foreignKeyName: "challenge_entries_user_challenge_id_fkey"
+            columns: ["user_challenge_id"]
+            isOneToOne: false
+            referencedRelation: "user_challenges"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      weekly_reviews: {
+        Row: {
+          id: string
+          user_challenge_id: string
+          week_number: number
+          review_date: string
+          challenges_completed_this_week: number
+          key_learnings: string | null
+          biggest_challenge: string | null
+          gratitude_highlights: string | null
+          weekly_intentions: string | null
+          specific_goals: string | null
+          prayer_requests: string | null
+          celebrate_wins: string | null
+          encouragement_notes: string | null
+          overall_mood_rating: number | null
+          spiritual_growth_rating: number | null
+          consistency_rating: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_challenge_id: string
+          week_number: number
+          review_date?: string
+          challenges_completed_this_week?: number
+          key_learnings?: string | null
+          biggest_challenge?: string | null
+          gratitude_highlights?: string | null
+          weekly_intentions?: string | null
+          specific_goals?: string | null
+          prayer_requests?: string | null
+          celebrate_wins?: string | null
+          encouragement_notes?: string | null
+          overall_mood_rating?: number | null
+          spiritual_growth_rating?: number | null
+          consistency_rating?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_challenge_id?: string
+          week_number?: number
+          review_date?: string
+          challenges_completed_this_week?: number
+          key_learnings?: string | null
+          biggest_challenge?: string | null
+          gratitude_highlights?: string | null
+          weekly_intentions?: string | null
+          specific_goals?: string | null
+          prayer_requests?: string | null
+          celebrate_wins?: string | null
+          encouragement_notes?: string | null
+          overall_mood_rating?: number | null
+          spiritual_growth_rating?: number | null
+          consistency_rating?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_reviews_user_challenge_id_fkey"
             columns: ["user_challenge_id"]
             isOneToOne: false
             referencedRelation: "user_challenges"

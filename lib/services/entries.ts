@@ -5,7 +5,7 @@ type ChallengeEntry = Database['public']['Tables']['challenge_entries']['Row'];
 
 export interface SaveEntryParams {
   userChallengeId: string;
-  dayNumber: number;
+  challengeNumber: number;
   entryType: 'god_message' | 'morning' | 'evening';
   content: string;
   completedOffline?: boolean;
@@ -13,11 +13,11 @@ export interface SaveEntryParams {
 
 export interface MarkOfflineParams {
   userChallengeId: string;
-  dayNumber: number;
+  challengeNumber: number;
 }
 
 export interface WeeklyReviewEntry {
-  day_number: number;
+  challenge_number: number;
   date: string;
   morning_entry: string | null;
   evening_entry: string | null;
@@ -31,7 +31,7 @@ export interface WeeklyReviewEntry {
  */
 export async function saveEntry({
   userChallengeId,
-  dayNumber,
+  challengeNumber,
   entryType,
   content,
   completedOffline = false,
@@ -50,7 +50,7 @@ export async function saveEntry({
     .from('challenge_entries')
     .select('id')
     .eq('user_challenge_id', userChallengeId)
-    .eq('day_number', dayNumber)
+    .eq('challenge_number', challengeNumber)
     .maybeSingle();
   
   if (fetchError && fetchError.code !== 'PGRST116') {
@@ -77,7 +77,7 @@ export async function saveEntry({
       .from('challenge_entries')
       .insert({
         user_challenge_id: userChallengeId,
-        day_number: dayNumber,
+        challenge_number: challengeNumber,
         ...updateData,
       })
       .select()
@@ -103,7 +103,7 @@ export async function saveEntry({
  */
 export async function markOfflineComplete({
   userChallengeId,
-  dayNumber,
+  challengeNumber,
 }: MarkOfflineParams): Promise<ChallengeEntry> {
   const supabase = createClient();
   
@@ -112,7 +112,7 @@ export async function markOfflineComplete({
     .from('challenge_entries')
     .select('id')
     .eq('user_challenge_id', userChallengeId)
-    .eq('day_number', dayNumber)
+    .eq('challenge_number', challengeNumber)
     .maybeSingle();
   
   if (fetchError && fetchError.code !== 'PGRST116') {
@@ -144,7 +144,7 @@ export async function markOfflineComplete({
       .from('challenge_entries')
       .insert({
         user_challenge_id: userChallengeId,
-        day_number: dayNumber,
+        challenge_number: challengeNumber,
         ...updateData,
       })
       .select()
@@ -247,7 +247,7 @@ export async function getWeeklyReview(
  */
 export async function addReviewNotes(
   userChallengeId: string,
-  dayNumber: number,
+  challengeNumber: number,
   reviewNotes: string
 ): Promise<ChallengeEntry> {
   const supabase = createClient();
@@ -257,7 +257,7 @@ export async function addReviewNotes(
     .from('challenge_entries')
     .select('id')
     .eq('user_challenge_id', userChallengeId)
-    .eq('day_number', dayNumber)
+    .eq('challenge_number', challengeNumber)
     .maybeSingle();
   
   if (fetchError && fetchError.code !== 'PGRST116') {
@@ -289,7 +289,7 @@ export async function addReviewNotes(
       .from('challenge_entries')
       .insert({
         user_challenge_id: userChallengeId,
-        day_number: dayNumber,
+        challenge_number: challengeNumber,
         ...updateData,
       })
       .select()
@@ -312,7 +312,7 @@ export async function addReviewNotes(
  */
 export async function getEntry(
   userChallengeId: string,
-  dayNumber: number
+  challengeNumber: number
 ): Promise<ChallengeEntry | null> {
   const supabase = createClient();
   
@@ -320,7 +320,7 @@ export async function getEntry(
     .from('challenge_entries')
     .select('*')
     .eq('user_challenge_id', userChallengeId)
-    .eq('day_number', dayNumber)
+    .eq('challenge_number', challengeNumber)
     .maybeSingle();
   
   if (error && error.code !== 'PGRST116') {

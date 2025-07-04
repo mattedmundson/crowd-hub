@@ -1,0 +1,63 @@
+DAILY CHALLENGE APP: RESEARCH-BASED DESIGN RECOMMENDATIONS
+======================================================================
+
+CORE DESIGN PRINCIPLES:
+  1. Focus on consistency over perfection - research shows missing one day doesn't derail habit formation
+  2. Design for 60+ day commitment timeline (median 66 days, range 18-254 days)
+  3. 
+  4. Include regular reflection and review components
+  5. Prioritize contextual cues and consistent timing over rigid daily requirements
+
+WEEKLY STRUCTURE RECOMMENDATIONS:
+  1. Hybrid approach: 5 Challenge days (Monday - Friday)
+  2. Fixed review day (e.g., Sunday) regardless of weekly completion status
+  3. Allow 'catch-up' challenges during review periods without penalty
+  4. Track total completion (e.g., 70/70 challenges) rather than perfect daily streaks
+  5. Implement 'minimum viable goal' concept - something is better than nothing
+
+MISSED DAYS STRATEGY:
+  1. No penalty for single missed days (research supports this)
+  2. The aim is to complete all of the challenges. You will do challenges Monday - Friday. Then, if you miss Wednesday, (challenge 3) then that challenge moves to Thursday. The challenge is not set to a specific day. What's important is that you complete all challenges. Say, 70 challenges are normally done in 10-14 weeks rather than saying it has to be done according to the exact schedule. 
+  3. Focus message on 'getting back on track' rather than 'starting over'
+  4. 
+  5. Show progress toward total goal rather than emphasizing consecutive days
+
+REVIEW DAY IMPLEMENTATION:
+  1. Weekly reflection prompts: What did you learn? What was challenging?
+  2. Progress visualization: show completed challenges and patterns
+  3. Planning ahead: set intentions for the coming week
+  4. Optional social sharing of insights and progress
+  5. Celebrate weekly wins regardless of perfect completion
+
+PSYCHOLOGY-BASED FEATURES:
+  1. Habit stacking: attach challenges to existing routines. For christians (who this app is aimed at) - this will make the most sense with morning devotions, or lunch breaks etc. 
+  2. Progress visualization that emphasizes cumulative achievement
+  3. Positive reinforcement for any completion (not just perfect days)
+  4. Community support and social accountability options
+  5. Personalized difficulty adjustment based on success patterns
+
+SPECIFIC ANSWER TO YOUR QUESTION:
+========================================
+
+Based on extensive research, here's the optimal structure for your challenge app:
+
+ðŸŽ¯ RECOMMENDED STRUCTURE:
+   â€¢ 5 challenge days per week (mon - Fri)
+   â€¢ 1 fixed review day (e.g., every Sunday)
+   â€¢ Total goal: Complete X challenges over Y weeks (not perfect daily completion)
+
+ðŸ“ HANDLING MISSED DAYS:
+   â€¢ Missing 1-2 days per week has minimal impact on habit formation
+   â€¢ Focus on 'getting back on track' messaging, not restarting
+   â€¢ Offer mini-challenges (2-5 min) for recovery days
+   â€¢ Track cumulative progress toward total goal
+
+ðŸ”„ REVIEW DAY STRUCTURE:
+   â€¢ Fixed day regardless of weekly completion
+   â€¢ Reflect on learnings and patterns
+   â€¢ Plan upcoming week
+   â€¢ Celebrate any progress made
+
+â­ KEY INSIGHT:
+   Research shows consistency matters more than perfection.
+   Design for flexibility while maintaining structure and accountability.

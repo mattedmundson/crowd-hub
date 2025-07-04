@@ -3,14 +3,16 @@
 import React from 'react';
 
 interface HundredDayGridProps {
-  completedDays: number[]; // Array of completed day numbers (e.g., [1, 2, 3, 5, 6])
-  currentDay?: number; // Current day (optional, for highlighting)
+  completedChallenges: number[]; // Array of completed challenge numbers (e.g., [1, 2, 3, 5, 6])
+  currentChallenge?: number; // Current challenge number (optional, for highlighting)
+  totalChallenges?: number; // Total challenges in this theme (defaults to 100)
   size?: 'small' | 'medium' | 'large';
 }
 
 export function HundredDayGrid({ 
-  completedDays = [], 
-  currentDay,
+  completedChallenges = [], 
+  currentChallenge,
+  totalChallenges = 100,
   size = 'medium' 
 }: HundredDayGridProps) {
   const brandBlue = '#0498db';
@@ -38,22 +40,23 @@ export function HundredDayGrid({
   };
   
   const config = sizeConfig[size];
-  const gridSize = 10;
+  
+  // Calculate grid dimensions based on total challenges
+  const gridSize = Math.ceil(Math.sqrt(totalChallenges));
   const totalWidth = (config.circle * gridSize) + (config.gap * (gridSize - 1));
   const totalHeight = totalWidth; // Square grid
   
-  // Create array of days 1-100
-  const days = Array.from({ length: 100 }, (_, i) => i + 1);
+  // Create array of challenges 1 to totalChallenges
+  const challenges = Array.from({ length: totalChallenges }, (_, i) => i + 1);
   
-  // Check if a day is completed
-  const isDayCompleted = (day: number) => {
-    console.log('Checking day', day, 'in completedDays:', completedDays);
-    return completedDays.includes(day);
+  // Check if a challenge is completed
+  const isChallengeCompleted = (challenge: number) => {
+    return completedChallenges.includes(challenge);
   };
   
-  // Get position for a day (1-based)
-  const getDayPosition = (day: number) => {
-    const index = day - 1; // Convert to 0-based
+  // Get position for a challenge (1-based)
+  const getChallengePosition = (challenge: number) => {
+    const index = challenge - 1; // Convert to 0-based
     const row = Math.floor(index / gridSize);
     const col = index % gridSize;
     const x = col * (config.circle + config.gap) + (config.circle / 2);
@@ -63,22 +66,22 @@ export function HundredDayGrid({
   
   // Find consecutive streaks
   const getStreaks = () => {
-    const sortedDays = [...completedDays].sort((a, b) => a - b);
+    const sortedChallenges = [...completedChallenges].sort((a, b) => a - b);
     const streaks: number[][] = [];
     let currentStreak: number[] = [];
     
-    for (let i = 0; i < sortedDays.length; i++) {
-      const day = sortedDays[i];
+    for (let i = 0; i < sortedChallenges.length; i++) {
+      const challenge = sortedChallenges[i];
       
       if (currentStreak.length === 0) {
-        currentStreak = [day];
-      } else if (day === currentStreak[currentStreak.length - 1] + 1) {
-        currentStreak.push(day);
+        currentStreak = [challenge];
+      } else if (challenge === currentStreak[currentStreak.length - 1] + 1) {
+        currentStreak.push(challenge);
       } else {
         if (currentStreak.length > 1) {
           streaks.push([...currentStreak]);
         }
-        currentStreak = [day];
+        currentStreak = [challenge];
       }
     }
     
@@ -98,10 +101,10 @@ export function HundredDayGrid({
     
     streaks.forEach((streak, streakIndex) => {
       for (let i = 0; i < streak.length - 1; i++) {
-        const fromDay = streak[i];
-        const toDay = streak[i + 1];
-        const fromPos = getDayPosition(fromDay);
-        const toPos = getDayPosition(toDay);
+        const fromChallenge = streak[i];
+        const toChallenge = streak[i + 1];
+        const fromPos = getChallengePosition(fromChallenge);
+        const toPos = getChallengePosition(toChallenge);
         
         lines.push(
           <line
@@ -131,14 +134,14 @@ export function HundredDayGrid({
         {/* Streak lines (drawn first, behind circles) */}
         {generateStreakLines()}
         
-        {/* Day circles */}
-        {days.map((day) => {
-          const position = getDayPosition(day);
-          const isCompleted = isDayCompleted(day);
-          const isCurrent = day === currentDay;
+        {/* Challenge circles */}
+        {challenges.map((challenge) => {
+          const position = getChallengePosition(challenge);
+          const isCompleted = isChallengeCompleted(challenge);
+          const isCurrent = challenge === currentChallenge;
           
           return (
-            <g key={day}>
+            <g key={challenge}>
               {/* Circle */}
               <circle
                 cx={position.x}

@@ -10,7 +10,7 @@ import { LivestreamCountdown } from '@/components/livestream-countdown';
 import { useUser } from '@/contexts/user-context';
 import { useUserRole } from '@/lib/hooks/useUserRole';
 import { createClient } from '@/lib/supabase/client';
-import { getCurrentChallenge, getTodaysContent } from '@/lib/services/challenges';
+import { getCurrentChallenge, getAllActiveChallenges, getTodaysContent } from '@/lib/services/challenges';
 import type { TodaysContent } from '@/lib/services/challenges';
 import type { Database } from '@/lib/types/database';
 
@@ -25,6 +25,7 @@ export function TopNav() {
   const { user } = useUser();
   const { isAdmin } = useUserRole();
   const [userChallenge, setUserChallenge] = useState<UserChallenge | null>(null);
+  const [allActiveChallenges, setAllActiveChallenges] = useState<UserChallenge[]>([]);
   const [todaysContent, setTodaysContent] = useState<TodaysContent | null>(null);
   const pathname = usePathname();
 
@@ -48,8 +49,13 @@ export function TopNav() {
     if (!user) return;
     
     try {
-      const currentChallenge = await getCurrentChallenge(user.id);
+      const [currentChallenge, activeChallenges] = await Promise.all([
+        getCurrentChallenge(user.id),
+        getAllActiveChallenges(user.id)
+      ]);
+      
       setUserChallenge(currentChallenge);
+      setAllActiveChallenges(activeChallenges);
       
       if (currentChallenge) {
         const content = await getTodaysContent(currentChallenge.id);
@@ -165,7 +171,7 @@ export function TopNav() {
                         </span>
                         <span className="text-white/70">•</span>
                         <span className="text-white/70 text-sm">
-                          Day {todaysContent?.dayNumber}
+                          Day {(todaysContent?.progress?.total_challenges_completed || 0) + 1}
                         </span>
                         <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isChallengesOpen ? 'rotate-180' : ''}`} />
                       </button>
@@ -188,7 +194,7 @@ export function TopNav() {
                               {userChallenge?.challenge?.title || 'Gratitude Challenge'}
                             </div>
                             <div className="text-white/70 text-sm">
-                              Day {todaysContent?.dayNumber}
+                              Day {(todaysContent?.progress?.total_challenges_completed || 0) + 1}
                             </div>
                           </Link>
                           <div className="p-4 text-center">
@@ -245,54 +251,28 @@ export function TopNav() {
                       </button>
                     </div>
                   </>
+                ) : userChallenge && todaysContent ? (
+                  /* Single challenge - direct link (no dropdown for single challenge) */
+                  <Link
+                    href={`/dashboard/${userChallenge.challenge.theme}/journey`}
+                    className="font-bold text-[#7DB9C5]/90 hover:text-[#7DB9C5] transition-colors flex items-center gap-2"
+                  >
+                    <span className="text-white font-medium">
+                      {userChallenge?.challenge?.title || 'Challenge'}
+                    </span>
+                    <span className="text-white/70">•</span>
+                    <span className="text-white/70 text-sm">
+                      Day {(todaysContent?.progress?.total_challenges_completed || 0) + 1}
+                    </span>
+                  </Link>
                 ) : (
-                  /* Default Active Challenges View */
-                  <div className="relative">
-                    <button
-                      onClick={toggleChallenges}
-                      className="font-bold text-[#7DB9C5]/90 hover:text-[#7DB9C5] transition-colors flex items-center gap-2"
-                    >
-                      Active Challenges
-                      <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isChallengesOpen ? 'rotate-180' : ''}`} />
-                    </button>
-                    
-                    {/* Challenges Dropdown */}
-                    <div className={`
-                      absolute top-full left-0 mt-2 w-80 z-50
-                      bg-[#21252D]/95 backdrop-blur-md
-                      rounded-[20px] shadow-lg border border-[#21252D]/20
-                      transition-all duration-300 ease-in-out origin-top
-                      ${isChallengesOpen ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'}
-                    `}>
-                      <div className="p-4">
-                        {userChallenge && todaysContent ? (
-                          <Link
-                            href="/dashboard/gratitude/journey"
-                            onClick={() => setIsChallengesOpen(false)}
-                            className="block p-4 rounded-[12px] hover:bg-[#7DB9C5]/10 transition-colors group"
-                          >
-                            <div className="text-[#7DB9C5] font-semibold text-lg mb-1 group-hover:text-[#7DB9C5]">
-                              {userChallenge.challenge?.title || 'Gratitude Challenge'}
-                            </div>
-                            <div className="text-white/70 text-sm">
-                              Day {todaysContent.dayNumber}
-                            </div>
-                          </Link>
-                        ) : (
-                          <div className="p-4 text-center">
-                            <div className="text-white/70 text-sm mb-2">No active challenges</div>
-                            <Link
-                              href="/dashboard/gratitude"
-                              onClick={() => setIsChallengesOpen(false)}
-                              className="text-[#7DB9C5] hover:text-[#7DB9C5]/80 text-sm font-medium"
-                            >
-                              Start a challenge →
-                            </Link>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                  /* No active challenge - direct link to start */
+                  <Link
+                    href="/dashboard/challenges"
+                    className="font-bold text-[#7DB9C5]/90 hover:text-[#7DB9C5] transition-colors"
+                  >
+                    Start a Challenge
+                  </Link>
                 )}
               </div>
 
@@ -370,11 +350,11 @@ export function TopNav() {
                                 onClick={toggleMenu}
                               >
                                 {userChallenge.challenge?.title || 'Gratitude Challenge'}
-                                <div className="text-white/70 text-sm">Day {todaysContent.dayNumber}</div>
+                                <div className="text-white/70 text-sm">Day {(todaysContent.progress?.total_challenges_completed || 0) + 1}</div>
                               </Link>
                             ) : (
                               <Link 
-                                href="/dashboard/gratitude" 
+                                href="/dashboard/challenges" 
                                 className="block text-white/90 hover:text-[#21252D] transition-colors text-2xl py-2"
                                 onClick={toggleMenu}
                               >
@@ -387,22 +367,54 @@ export function TopNav() {
                           </div>
                           
                           {user && (
-                            <Link 
-                              href="/account" 
-                              className="block text-white/90 hover:text-[#21252D] transition-colors text-2xl md:text-4xl py-2 md:py-0"
-                              onClick={toggleMenu}
-                            >
-                              My Account
-                            </Link>
+                            <>
+                              <Link 
+                                href="/dashboard" 
+                                className="block text-white/90 hover:text-[#21252D] transition-colors text-2xl md:text-4xl py-2 md:py-0"
+                                onClick={toggleMenu}
+                              >
+                                My Dashboard
+                              </Link>
+                              <Link 
+                                href="/dashboard/challenges" 
+                                className="block text-white/90 hover:text-[#21252D] transition-colors text-2xl md:text-4xl py-2 md:py-0"
+                                onClick={toggleMenu}
+                              >
+                                Challenges
+                              </Link>
+                              <Link 
+                                href="/dashboard/review" 
+                                className="block text-white/90 hover:text-[#21252D] transition-colors text-2xl md:text-4xl py-2 md:py-0"
+                                onClick={toggleMenu}
+                              >
+                                Weekly Review
+                              </Link>
+                              <Link 
+                                href="/account" 
+                                className="block text-white/90 hover:text-[#21252D] transition-colors text-2xl md:text-4xl py-2 md:py-0"
+                                onClick={toggleMenu}
+                              >
+                                My Account
+                              </Link>
+                            </>
                           )}
                           {isAdmin && (
-                            <Link 
-                              href="/dashboard/admin" 
-                              className="block text-white/90 hover:text-[#21252D] transition-colors text-2xl md:text-4xl py-2 md:py-0"
-                              onClick={toggleMenu}
-                            >
-                              Admin
-                            </Link>
+                            <>
+                              <Link 
+                                href="/dashboard/admin" 
+                                className="block text-white/90 hover:text-[#21252D] transition-colors text-2xl md:text-4xl py-2 md:py-0"
+                                onClick={toggleMenu}
+                              >
+                                Admin
+                              </Link>
+                              <Link 
+                                href="/dashboard/admin/challenges" 
+                                className="block text-white/90 hover:text-[#21252D] transition-colors text-2xl md:text-4xl py-2 md:py-0"
+                                onClick={toggleMenu}
+                              >
+                                Manage Challenges
+                              </Link>
+                            </>
                           )}
                           <Link 
                             href="/about" 
