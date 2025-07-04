@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, Instagram, Youtube, ChevronDown, BookOpen, Check, Sun, Moon } from 'lucide-react';
+import { Menu, X, Instagram, Youtube, BookOpen, Check, Sun, Moon } from 'lucide-react';
 import { CrowdLogo } from '@/components/icons/crowd-logo';
 import { CrowdChurch } from '@/components/icons/crowd-church';
 import { LivestreamCountdown } from '@/components/livestream-countdown';
@@ -21,12 +21,12 @@ type UserChallenge = Database['public']['Tables']['user_challenges']['Row'] & {
 export function TopNav() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isChallengesOpen, setIsChallengesOpen] = useState(false);
   const { user } = useUser();
   const { isAdmin } = useUserRole();
   const [userChallenge, setUserChallenge] = useState<UserChallenge | null>(null);
   const [allActiveChallenges, setAllActiveChallenges] = useState<UserChallenge[]>([]);
   const [todaysContent, setTodaysContent] = useState<TodaysContent | null>(null);
+  const [isLoadingChallenge, setIsLoadingChallenge] = useState(true);
   const pathname = usePathname();
 
 
@@ -42,6 +42,8 @@ export function TopNav() {
   useEffect(() => {
     if (user) {
       loadChallengeData();
+    } else {
+      setIsLoadingChallenge(false);
     }
   }, [user]); // loadChallengeData is stable, no need to include
 
@@ -63,15 +65,13 @@ export function TopNav() {
       }
     } catch (error) {
       console.error('Error loading challenge data:', error);
+    } finally {
+      setIsLoadingChallenge(false);
     }
   };
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
-  };
-
-  const toggleChallenges = () => {
-    setIsChallengesOpen(!isChallengesOpen);
   };
 
   const handleLogout = async () => {
@@ -80,7 +80,7 @@ export function TopNav() {
     window.location.href = '/auth/login';
   };
 
-  // Determine if we should show challenge progress view
+  // Determine if we should show challenge progress view (with progress icons)
   const showChallengeProgress = (pathname?.includes('/journey') || pathname?.includes('/today')) && userChallenge && todaysContent;
   
   // Check completion status for each entry type
@@ -157,54 +157,25 @@ export function TopNav() {
 
               {/* Center Navigation */}
               <div className="hidden md:flex items-center space-x-8">
-                {showChallengeProgress ? (
+                {isLoadingChallenge && user ? (
+                  /* Loading state */
+                  <div className="text-white/50">Loading...</div>
+                ) : showChallengeProgress ? (
                   /* Challenge Progress View */
                   <>
-                    {/* Challenge Name + Day (Clickable for dropdown) */}
-                    <div className="relative">
-                      <button
-                        onClick={toggleChallenges}
-                        className="font-bold text-[#7DB9C5]/90 hover:text-[#7DB9C5] transition-colors flex items-center gap-2"
-                      >
-                        <span className="text-white font-medium">
-                          {userChallenge?.challenge?.title || 'Gratitude Challenge'}
-                        </span>
-                        <span className="text-white/70">•</span>
-                        <span className="text-white/70 text-sm">
-                          Day {(todaysContent?.progress?.total_challenges_completed || 0) + 1}
-                        </span>
-                        <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isChallengesOpen ? 'rotate-180' : ''}`} />
-                      </button>
-                      
-                      {/* Challenges Dropdown */}
-                      <div className={`
-                        absolute top-full left-0 mt-2 w-80 z-50
-                        bg-[#21252D]/95 backdrop-blur-md
-                        rounded-[20px] shadow-lg border border-[#21252D]/20
-                        transition-all duration-300 ease-in-out origin-top
-                        ${isChallengesOpen ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'}
-                      `}>
-                        <div className="p-4">
-                          <Link
-                            href="/dashboard/gratitude/journey"
-                            onClick={() => setIsChallengesOpen(false)}
-                            className="block p-4 rounded-[12px] hover:bg-[#7DB9C5]/10 transition-colors group"
-                          >
-                            <div className="text-[#7DB9C5] font-semibold text-lg mb-1 group-hover:text-[#7DB9C5]">
-                              {userChallenge?.challenge?.title || 'Gratitude Challenge'}
-                            </div>
-                            <div className="text-white/70 text-sm">
-                              Day {(todaysContent?.progress?.total_challenges_completed || 0) + 1}
-                            </div>
-                          </Link>
-                          <div className="p-4 text-center">
-                            <div className="text-white/70 text-xs">
-                              Switch to different challenge (coming soon)
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                    {/* Challenge Name + Day (Clickable to journey start) */}
+                    <Link
+                      href={`/dashboard/${userChallenge.challenge.theme}/journey?section=0`}
+                      className="font-bold text-[#7DB9C5]/90 hover:text-[#7DB9C5] transition-colors flex items-center gap-2"
+                    >
+                      <span className="text-white font-medium">
+                        {userChallenge?.challenge?.title || 'Gratitude Challenge'}
+                      </span>
+                      <span className="text-white/70">•</span>
+                      <span className="text-white/70 text-sm">
+                        Day {(todaysContent?.progress?.total_challenges_completed || 0) + 1}
+                      </span>
+                    </Link>
 
                     {/* Progress Icons */}
                     <div className="flex items-center space-x-4">
@@ -251,20 +222,6 @@ export function TopNav() {
                       </button>
                     </div>
                   </>
-                ) : userChallenge && todaysContent ? (
-                  /* Single challenge - direct link (no dropdown for single challenge) */
-                  <Link
-                    href={`/dashboard/${userChallenge.challenge.theme}/journey`}
-                    className="font-bold text-[#7DB9C5]/90 hover:text-[#7DB9C5] transition-colors flex items-center gap-2"
-                  >
-                    <span className="text-white font-medium">
-                      {userChallenge?.challenge?.title || 'Challenge'}
-                    </span>
-                    <span className="text-white/70">•</span>
-                    <span className="text-white/70 text-sm">
-                      Day {(todaysContent?.progress?.total_challenges_completed || 0) + 1}
-                    </span>
-                  </Link>
                 ) : (
                   /* No active challenge - direct link to start */
                   <Link
@@ -309,29 +266,57 @@ export function TopNav() {
               <div className="mx-auto w-[90%] md:w-[750px] min-h-[400px] rounded-[20px] p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
                   
-                  {/* Left Column - Latest Livestream - Hidden on Mobile */}
+                  {/* Left Column - Active Challenges - Hidden on Mobile */}
                   <div className="p-4 hidden md:block">
-                    <p className="text-white text-sm mb-4">Latest</p>
+                    <p className="text-white text-sm mb-4">Active Challenges</p>
                     
-                    {/* Title */}
-                    <h4 className="font-semibold text-[#21252D] mb-2">
-                      Weekly Gratitude Session: Finding Joy in Small Moments
-                    </h4>
-                    
-                    {/* Summary */}
-                    <p className="text-[#21252D]/90 text-sm mb-3 line-clamp-3">
-                      Join us for an inspiring session where we explore the power of gratitude in our daily lives. 
-                      Discover practical techniques to cultivate thankfulness and transform your perspective.
-                    </p>
-                    
-                    {/* Read More Link */}
-                    <Link 
-                      href="/livestream/latest" 
-                      className="text-white/80 hover:text-[#21252D] text-xl font-bold"
-                      onClick={toggleMenu}
-                    >
-                      Watch Now →
-                    </Link>
+                    {allActiveChallenges.length > 0 ? (
+                      <div className="space-y-4">
+                        {allActiveChallenges.map((challenge) => (
+                          <Link
+                            key={challenge.id}
+                            href={`/dashboard/${challenge.challenge.theme}/journey?section=0`}
+                            onClick={toggleMenu}
+                            className="block p-3 rounded-lg hover:bg-[#7DB9C5]/10 transition-colors group"
+                          >
+                            <h4 className="font-semibold text-[#21252D] mb-1 group-hover:text-[#7DB9C5]">
+                              {challenge.challenge.title}
+                            </h4>
+                            <p className="text-[#21252D]/70 text-sm">
+                              Next: Day {(challenge.total_completed || 0) + 1}
+                            </p>
+                            <div className="text-[#7DB9C5] text-xs mt-1">
+                              {challenge.total_completed || 0} of {challenge.challenge.total_challenges} completed
+                            </div>
+                          </Link>
+                        ))}
+                        
+                        {/* Start New Challenge Link */}
+                        <Link 
+                          href="/dashboard/challenges" 
+                          className="block text-white/80 hover:text-[#21252D] text-sm font-medium mt-4"
+                          onClick={toggleMenu}
+                        >
+                          + Start New Challenge
+                        </Link>
+                      </div>
+                    ) : (
+                      <div>
+                        <h4 className="font-semibold text-[#21252D] mb-2">
+                          No Active Challenges
+                        </h4>
+                        <p className="text-[#21252D]/90 text-sm mb-3">
+                          Start your spiritual journey with one of our guided challenges.
+                        </p>
+                        <Link 
+                          href="/dashboard/challenges" 
+                          className="text-white/80 hover:text-[#21252D] text-xl font-bold"
+                          onClick={toggleMenu}
+                        >
+                          Start Challenge →
+                        </Link>
+                      </div>
+                    )}
                   </div>
 
                   {/* Right Column - Menu */}

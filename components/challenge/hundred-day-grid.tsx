@@ -3,37 +3,40 @@
 import React from 'react';
 
 interface HundredDayGridProps {
-  completedChallenges: number[]; // Array of completed challenge numbers (e.g., [1, 2, 3, 5, 6])
-  currentChallenge?: number; // Current challenge number (optional, for highlighting)
+  completedDays: number[]; // Array of completed day numbers (e.g., [1, 2, 3, 5, 6])
+  currentDay?: number; // Current day number (optional, for highlighting)
   totalChallenges?: number; // Total challenges in this theme (defaults to 100)
   size?: 'small' | 'medium' | 'large';
+  showReviews?: boolean; // Whether to show review days
 }
 
 export function HundredDayGrid({ 
-  completedChallenges = [], 
-  currentChallenge,
+  completedDays = [], 
+  currentDay,
   totalChallenges = 100,
-  size = 'medium' 
+  size = 'medium',
+  showReviews = true
 }: HundredDayGridProps) {
   const brandBlue = '#0498db';
+  const reviewColor = '#7DB9C5'; // Lighter blue for review days
   
   // Size configurations
   const sizeConfig = {
     small: {
-      circle: 20,
-      gap: 8,
+      circle: 16,
+      gap: 6,
       strokeWidth: 1.5,
       fontSize: '10px'
     },
     medium: {
-      circle: 30,
-      gap: 10,
+      circle: 24,
+      gap: 8,
       strokeWidth: 2,
       fontSize: '12px'
     },
     large: {
-      circle: 40,
-      gap: 12,
+      circle: 32,
+      gap: 10,
       strokeWidth: 2.5,
       fontSize: '14px'
     }
@@ -41,123 +44,208 @@ export function HundredDayGrid({
   
   const config = sizeConfig[size];
   
-  // Calculate grid dimensions based on total challenges
-  const gridSize = Math.ceil(Math.sqrt(totalChallenges));
-  const totalWidth = (config.circle * gridSize) + (config.gap * (gridSize - 1));
-  const totalHeight = totalWidth; // Square grid
+  // Calculate total elements including review days
+  const reviewInterval = 5;
+  const numberOfReviews = showReviews ? Math.floor(totalChallenges / reviewInterval) : 0;
+  const totalElements = totalChallenges + numberOfReviews;
   
-  // Create array of challenges 1 to totalChallenges
-  const challenges = Array.from({ length: totalChallenges }, (_, i) => i + 1);
+  // Create array of all elements (challenges + reviews)
+  const elements: Array<{ type: 'challenge' | 'review', challengeNumber?: number, dayNumber: number }> = [];
+  let challengeCount = 0;
+  let dayCount = 1;
   
-  // Check if a challenge is completed
-  const isChallengeCompleted = (challenge: number) => {
-    return completedChallenges.includes(challenge);
-  };
-  
-  // Get position for a challenge (1-based)
-  const getChallengePosition = (challenge: number) => {
-    const index = challenge - 1; // Convert to 0-based
-    const row = Math.floor(index / gridSize);
-    const col = index % gridSize;
-    const x = col * (config.circle + config.gap) + (config.circle / 2);
-    const y = row * (config.circle + config.gap) + (config.circle / 2);
-    return { x, y };
-  };
-  
-  // Find consecutive streaks
-  const getStreaks = () => {
-    const sortedChallenges = [...completedChallenges].sort((a, b) => a - b);
-    const streaks: number[][] = [];
-    let currentStreak: number[] = [];
+  while (challengeCount < totalChallenges) {
+    // Add 5 challenges (or remaining challenges)
+    const challengesInThisBlock = Math.min(reviewInterval, totalChallenges - challengeCount);
+    for (let i = 0; i < challengesInThisBlock; i++) {
+      challengeCount++;
+      elements.push({ 
+        type: 'challenge', 
+        challengeNumber: challengeCount, 
+        dayNumber: dayCount++ 
+      });
+    }
     
-    for (let i = 0; i < sortedChallenges.length; i++) {
-      const challenge = sortedChallenges[i];
+    // Add review day if we have more challenges and reviews are enabled
+    if (showReviews && challengeCount < totalChallenges && challengeCount % reviewInterval === 0) {
+      elements.push({ 
+        type: 'review', 
+        dayNumber: dayCount++ 
+      });
+    }
+  }
+  
+  // Calculate grid dimensions
+  const gridColumns = 6; // 5 challenges + 1 review = perfect visual grouping per row
+  const totalRows = Math.ceil(elements.length / gridColumns);
+  
+  // Split elements for two-column desktop layout
+  const leftColumnRows = Math.ceil(totalRows / 2);
+  const rightColumnRows = totalRows - leftColumnRows;
+  
+  const leftElements = elements.slice(0, leftColumnRows * gridColumns);
+  const rightElements = elements.slice(leftColumnRows * gridColumns);
+  
+  const singleGridWidth = (config.circle * gridColumns) + (config.gap * (gridColumns - 1));
+  const leftGridHeight = (config.circle * leftColumnRows) + (config.gap * (leftColumnRows - 1));
+  const rightGridHeight = rightElements.length > 0 ? (config.circle * rightColumnRows) + (config.gap * (rightColumnRows - 1)) : 0;
+  
+  // Check if a day is completed
+  const isDayCompleted = (dayNumber: number) => {
+    return completedDays.includes(dayNumber);
+  };
+  
+  // Create grid component
+  const createGrid = (gridElements: typeof elements, offsetIndex: number = 0) => {
+    const gridRows = Math.ceil(gridElements.length / gridColumns);
+    const gridHeight = (config.circle * gridRows) + (config.gap * (gridRows - 1));
+    
+    // Get position for an element within this specific grid
+    const getElementPosition = (index: number) => {
+      const row = Math.floor(index / gridColumns);
+      const col = index % gridColumns;
+      const x = col * (config.circle + config.gap) + (config.circle / 2);
+      const y = row * (config.circle + config.gap) + (config.circle / 2);
+      return { x, y };
+    };
+    
+    // Find consecutive streaks for this grid only
+    const getStreaks = () => {
+      const elementDays = gridElements.map(el => el.dayNumber);
+      const relevantCompletedDays = completedDays.filter(day => elementDays.includes(day));
+      const sortedDays = [...relevantCompletedDays].sort((a, b) => a - b);
+      const streaks: number[][] = [];
+      let currentStreak: number[] = [];
       
-      if (currentStreak.length === 0) {
-        currentStreak = [challenge];
-      } else if (challenge === currentStreak[currentStreak.length - 1] + 1) {
-        currentStreak.push(challenge);
-      } else {
-        if (currentStreak.length > 1) {
-          streaks.push([...currentStreak]);
-        }
-        currentStreak = [challenge];
-      }
-    }
-    
-    // Don't forget the last streak
-    if (currentStreak.length > 1) {
-      streaks.push(currentStreak);
-    }
-    
-    return streaks;
-  };
-  
-  const streaks = getStreaks();
-  
-  // Generate streak lines
-  const generateStreakLines = () => {
-    const lines: JSX.Element[] = [];
-    
-    streaks.forEach((streak, streakIndex) => {
-      for (let i = 0; i < streak.length - 1; i++) {
-        const fromChallenge = streak[i];
-        const toChallenge = streak[i + 1];
-        const fromPos = getChallengePosition(fromChallenge);
-        const toPos = getChallengePosition(toChallenge);
+      for (let i = 0; i < sortedDays.length; i++) {
+        const day = sortedDays[i];
         
-        lines.push(
-          <line
-            key={`streak-${streakIndex}-${i}`}
-            x1={fromPos.x}
-            y1={fromPos.y}
-            x2={toPos.x}
-            y2={toPos.y}
-            stroke={brandBlue}
-            strokeWidth={config.strokeWidth}
-            strokeLinecap="round"
-          />
-        );
+        if (currentStreak.length === 0) {
+          currentStreak = [day];
+        } else if (day === currentStreak[currentStreak.length - 1] + 1) {
+          currentStreak.push(day);
+        } else {
+          if (currentStreak.length > 1) {
+            streaks.push([...currentStreak]);
+          }
+          currentStreak = [day];
+        }
       }
-    });
+      
+      // Don't forget the last streak
+      if (currentStreak.length > 1) {
+        streaks.push(currentStreak);
+      }
+      
+      return streaks;
+    };
     
-    return lines;
-  };
-  
-  return (
-    <div className="flex items-center justify-center">
+    const streaks = getStreaks();
+    
+    // Generate streak lines for this grid
+    const generateStreakLines = () => {
+      const lines: JSX.Element[] = [];
+      
+      streaks.forEach((streak, streakIndex) => {
+        for (let i = 0; i < streak.length - 1; i++) {
+          const fromDay = streak[i];
+          const toDay = streak[i + 1];
+          
+          // Find indices of these days in our grid elements array
+          const fromIndex = gridElements.findIndex(el => el.dayNumber === fromDay);
+          const toIndex = gridElements.findIndex(el => el.dayNumber === toDay);
+          
+          if (fromIndex !== -1 && toIndex !== -1) {
+            const fromPos = getElementPosition(fromIndex);
+            const toPos = getElementPosition(toIndex);
+            
+            lines.push(
+              <line
+                key={`streak-${streakIndex}-${i}-${offsetIndex}`}
+                x1={fromPos.x}
+                y1={fromPos.y}
+                x2={toPos.x}
+                y2={toPos.y}
+                stroke={brandBlue}
+                strokeWidth={config.strokeWidth}
+                strokeLinecap="round"
+              />
+            );
+          }
+        }
+      });
+      
+      return lines;
+    };
+    
+    return (
       <svg 
-        width={totalWidth} 
-        height={totalHeight}
+        width={singleGridWidth} 
+        height={gridHeight}
         className="overflow-visible"
       >
         {/* Streak lines (drawn first, behind circles) */}
         {generateStreakLines()}
         
-        {/* Challenge circles */}
-        {challenges.map((challenge) => {
-          const position = getChallengePosition(challenge);
-          const isCompleted = isChallengeCompleted(challenge);
-          const isCurrent = challenge === currentChallenge;
+        {/* Element circles */}
+        {gridElements.map((element, index) => {
+          const position = getElementPosition(index);
+          const isCompleted = isDayCompleted(element.dayNumber);
+          const isCurrent = element.dayNumber === currentDay;
+          const isReview = element.type === 'review';
           
           return (
-            <g key={challenge}>
-              {/* Circle */}
-              <circle
-                cx={position.x}
-                cy={position.y}
-                r={config.circle / 2}
-                fill={isCompleted ? brandBlue : 'white'}
-                stroke={brandBlue}
-                strokeWidth={isCurrent ? config.strokeWidth * 1.5 : config.strokeWidth}
-                className="transition-all duration-300"
-              />
-              
-              
+            <g key={`element-${offsetIndex}-${index}`}>
+              {/* Challenge day: Circle, Review day: Rounded rectangle */}
+              {isReview ? (
+                <rect
+                  x={position.x - (config.circle / 2)}
+                  y={position.y - (config.circle / 2)}
+                  width={config.circle}
+                  height={config.circle}
+                  rx={config.circle / 4}
+                  ry={config.circle / 4}
+                  fill={isCompleted ? reviewColor : 'white'}
+                  stroke={reviewColor}
+                  strokeWidth={isCurrent ? config.strokeWidth * 1.5 : config.strokeWidth}
+                  className="transition-all duration-300"
+                />
+              ) : (
+                <circle
+                  cx={position.x}
+                  cy={position.y}
+                  r={config.circle / 2}
+                  fill={isCompleted ? brandBlue : 'white'}
+                  stroke={brandBlue}
+                  strokeWidth={isCurrent ? config.strokeWidth * 1.5 : config.strokeWidth}
+                  className="transition-all duration-300"
+                />
+              )}
             </g>
           );
         })}
       </svg>
+    );
+  };
+  
+  return (
+    <div className="flex items-center justify-center">
+      {/* Mobile: Single column */}
+      <div className="block md:hidden">
+        {createGrid(elements)}
+      </div>
+      
+      {/* Desktop: Two columns */}
+      <div className="hidden md:flex gap-10 items-start">
+        <div className="flex-shrink-0">
+          {createGrid(leftElements, 0)}
+        </div>
+        {rightElements.length > 0 && (
+          <div className="flex-shrink-0">
+            {createGrid(rightElements, leftElements.length)}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

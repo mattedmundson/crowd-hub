@@ -11,7 +11,7 @@ import { StreakCounter } from '@/components/challenge/streak-counter';
 import { getTodaysContent, getCurrentChallenge } from '@/lib/services/challenges';
 import { saveEntry, markOfflineComplete } from '@/lib/services/entries';
 import { createClient } from '@/lib/supabase/client';
-import { ArrowLeft, Calendar, RotateCcw, Edit2 } from 'lucide-react';
+import { ArrowLeft, RotateCcw, Edit2 } from 'lucide-react';
 import { useUserRole } from '@/lib/hooks/useUserRole';
 import type { TodaysContent } from '@/lib/services/challenges';
 import type { Database } from '@/lib/types/database';
@@ -124,9 +124,6 @@ export default function TodayPage() {
     router.push('/dashboard/gratitude');
   };
 
-  const handleViewCalendar = () => {
-    router.push('/dashboard/gratitude/calendar');
-  };
 
   const handleEdit = (type: string, dayNumber?: number) => {
     // Navigate to edit page with appropriate parameters
@@ -195,11 +192,6 @@ export default function TodayPage() {
         </div>
         
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={handleViewCalendar}>
-            <Calendar className="h-4 w-4 mr-2" />
-            Calendar
-          </Button>
-          
           {isReviewDay && (
             <Badge variant="secondary">
               <RotateCcw className="h-3 w-3 mr-1" />

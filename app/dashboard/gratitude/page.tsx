@@ -10,7 +10,7 @@ import { StreakCounter } from '@/components/challenge/streak-counter';
 import { ProgressBar } from '@/components/challenge/progress-bar';
 import { getChallenges, getCurrentChallenge, startChallenge } from '@/lib/services/challenges';
 import { createClient } from '@/lib/supabase/client';
-import { CalendarDays, Play, BookOpen } from 'lucide-react';
+import { Play, BookOpen } from 'lucide-react';
 import type { Database } from '@/lib/types/database';
 
 type Challenge = Database['public']['Tables']['challenges']['Row'];
@@ -86,9 +86,6 @@ export default function GratitudePage() {
     router.push('/dashboard/gratitude/today');
   };
 
-  const handleViewCalendar = () => {
-    router.push('/dashboard/gratitude/calendar');
-  };
 
   if (loading) {
     return (
@@ -159,10 +156,6 @@ export default function GratitudePage() {
                   Continue Challenge
                 </Button>
                 
-                <Button variant="outline" onClick={handleViewCalendar}>
-                  <CalendarDays className="h-4 w-4 mr-2" />
-                  View Calendar
-                </Button>
               </div>
             </CardContent>
           </Card>

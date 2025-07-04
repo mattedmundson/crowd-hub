@@ -42,6 +42,15 @@ export function GenericJourney({ challengeTheme }: GenericJourneyProps) {
   const { role: userRole } = useUserRole();
   const canEdit = userRole === 'admin' || userRole === 'editor';
 
+  const handleOnboardingComplete = () => {
+    localStorage.setItem('crowdhub-onboarding-seen', 'true');
+    setShowOnboarding(false);
+  };
+
+  const showOnboardingInfo = () => {
+    setShowOnboarding(true);
+  };
+
   // Theme-specific configurations
   const getThemeConfig = (theme: string) => {
     const configs = {
@@ -121,14 +130,6 @@ export function GenericJourney({ challengeTheme }: GenericJourneyProps) {
     }
   };
 
-  const handleOnboardingComplete = () => {
-    localStorage.setItem('crowdhub-onboarding-seen', 'true');
-    setShowOnboarding(false);
-  };
-
-  const showOnboardingInfo = () => {
-    setShowOnboarding(true);
-  };
 
   useEffect(() => {
     loadData();
@@ -148,9 +149,6 @@ export function GenericJourney({ challengeTheme }: GenericJourneyProps) {
       if (!isNaN(sectionIndex) && sectionIndex >= 0 && sectionIndex <= 12) {
         setTimeout(() => scrollToSection(sectionIndex), 500);
       }
-    } else if (!loading) {
-      // If no section param, scroll to top
-      setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
     }
   }, [searchParams, loading]);
 
@@ -164,25 +162,31 @@ export function GenericJourney({ challengeTheme }: GenericJourneyProps) {
       const sectionIndex = Math.floor(currentScrollY / viewportHeight);
       setCurrentSection(Math.min(sectionIndex, 12));
       
-      // Scripture animation (Section 2) - starts when you scroll into scripture section
-      const scriptureStart = viewportHeight * 1;
-      const scriptureEnd = viewportHeight * 2;
+      // Debug: Log current section and scroll position
+      if (sectionIndex >= 7 && sectionIndex <= 9) {
+        console.log('Section:', sectionIndex, 'ScrollY:', currentScrollY, 'VH:', viewportHeight, 'RecapStart:', viewportHeight * 8);
+      }
+      
+      // Calculate scroll progress for Bible verse animation
+      // Animation should happen as we scroll through the Bible verse section
+      const animationStart = viewportHeight * 0.5; // Start halfway through section 1
+      const animationEnd = viewportHeight * 1.67;  // Complete at 2/3 through section 2
       
       let newProgress = 0;
-      if (currentScrollY < scriptureStart) {
+      if (currentScrollY < animationStart) {
         newProgress = 0;
-      } else if (currentScrollY > scriptureEnd) {
+      } else if (currentScrollY > animationEnd) {
         newProgress = 1;
       } else {
-        newProgress = (currentScrollY - scriptureStart) / (scriptureEnd - scriptureStart);
+        newProgress = (currentScrollY - animationStart) / (animationEnd - animationStart);
         newProgress = Math.min(Math.max(newProgress, 0), 1);
       }
       
       setScrollProgress(newProgress);
       
-      // Scripture recap animation (Section 9) - starts when you scroll into recap section
-      const recapSectionStart = viewportHeight * 8;
-      const recapAnimationEnd = viewportHeight * 9;
+      // Calculate scroll progress for Bible verse recap animation (starts in section 7)
+      const recapSectionStart = viewportHeight * 7; // Start at section 7
+      const recapAnimationEnd = viewportHeight * 7.67;  // Complete at 2/3 through section 7
       
       let newRecapProgress = 0;
       if (currentScrollY < recapSectionStart) {
@@ -195,6 +199,11 @@ export function GenericJourney({ challengeTheme }: GenericJourneyProps) {
       }
       
       setRecapScrollProgress(newRecapProgress);
+      
+      // Debug logging
+      if (newRecapProgress > 0 && newRecapProgress < 1) {
+        console.log('Recap progress:', newRecapProgress, 'at scroll:', currentScrollY);
+      }
     };
 
     window.addEventListener('scroll', handleScroll);
@@ -378,51 +387,85 @@ export function GenericJourney({ challengeTheme }: GenericJourneyProps) {
           <h1 className="text-4xl md:text-6xl font-light leading-tight text-foreground">
             Close your eyes, take a deep breath and commit this time to the Lord
           </h1>
+          <p className="text-xl md:text-2xl text-muted-foreground font-light">
+            Day {challengeNumber}
+          </p>
+          <div className="pt-16">
+            <button 
+              onClick={() => scrollToSection(1)}
+              className="hover:text-foreground hover:animate-bounce transition-colors cursor-pointer"
+              title="Continue to scripture"
+            >
+              <svg className="w-6 h-6 mx-auto text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
+            </button>
+          </div>
         </div>
       </section>
 
-      {/* Section 2: Scripture */}
-      {prompt?.scripture_text && (
-        <section 
-          ref={(el) => sectionsRef.current[1] = el}
-          className="min-h-screen flex items-center justify-center px-6"
-        >
-          <div className="text-center max-w-4xl mx-auto space-y-8">
-            {canEdit && (
-              <button
-                onClick={() => handleEdit('scripture', todaysContent?.challengeNumber)}
-                className="absolute top-4 right-4 p-2 bg-primary text-primary-foreground rounded-full shadow-lg hover:bg-primary/90 transition-colors"
-                title="Edit scripture"
-              >
-                <Edit2 className="h-4 w-4" />
-              </button>
-            )}
-            
-            <div className="text-2xl md:text-4xl font-light leading-relaxed text-foreground">
-              {prompt.scripture_text.split(' ').map((word, index, words) => {
-                const wordProgress = index / words.length;
-                const shouldShow = scrollProgress >= wordProgress;
+      {/* Section 2: Bible Verse */}
+      <section 
+        ref={(el) => sectionsRef.current[1] = el}
+        className="min-h-screen flex items-center justify-center px-6"
+      >
+        <div className="text-center max-w-5xl mx-auto space-y-8">
+          {prompt?.scripture_reference && (
+            <p 
+              className="text-xl md:text-2xl text-primary font-medium transition-all duration-300"
+              style={{
+                opacity: 0.3 + (scrollProgress * 0.7),
+                transform: `translateY(${(1 - scrollProgress) * 20}px)`
+              }}
+            >
+              {prompt.scripture_reference}
+            </p>
+          )}
+          {prompt?.scripture_text && (
+            <blockquote 
+              className="text-3xl md:text-5xl font-black leading-relaxed"
+              style={{
+                transform: `translateY(${(1 - scrollProgress) * 50}px)`
+              }}
+            >
+              "
+              {prompt.scripture_text.split(' ').map((word, index) => {
+                const totalWords = prompt.scripture_text.split(' ').length;
+                // Complete the animation much earlier - when we're only partway through the scroll
+                const adjustedProgress = Math.min(1, scrollProgress * 2); // Animation completes at 50% scroll
+                const wordRevealPoint = index / totalWords;
+                const wordProgress = Math.max(0, Math.min(1, (adjustedProgress - wordRevealPoint) * totalWords));
                 
                 return (
                   <span
                     key={index}
-                    className={`inline-block transition-all duration-300 ${
-                      shouldShow 
-                        ? 'opacity-100 transform translate-y-0' 
-                        : 'opacity-0 transform translate-y-4'
-                    }`}
+                    className="transition-opacity duration-300"
                     style={{
-                      transitionDelay: shouldShow ? `${(index % 10) * 50}ms` : '0ms'
+                      opacity: 0.05 + (wordProgress * 0.95)
                     }}
                   >
-                    {word}{index < words.length - 1 ? ' ' : ''}
+                    {word}
+                    {index < totalWords - 1 ? ' ' : ''}
                   </span>
                 );
               })}
-            </div>
+              "
+            </blockquote>
+          )}
+          <div className="pt-16">
+            <button 
+              onClick={() => scrollToSection(2)}
+              className="transition-opacity duration-300 hover:text-foreground hover:animate-bounce cursor-pointer"
+              style={{ opacity: scrollProgress < 0.8 ? 1 : 0 }}
+              title="Continue to context"
+            >
+              <svg className="w-6 h-6 mx-auto text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
+            </button>
           </div>
-        </section>
-      )}
+        </div>
+      </section>
 
       {/* Section 3: Context */}
       {prompt?.context_text && (
@@ -431,12 +474,25 @@ export function GenericJourney({ challengeTheme }: GenericJourneyProps) {
           className="min-h-screen flex items-center justify-center px-6"
         >
           <div className="text-center max-w-2xl mx-auto space-y-8">
-            <div className="text-lg md:text-xl leading-relaxed text-foreground space-y-6">
-              {prompt.context_text.split('\n').filter(p => p.trim()).map((paragraph, index) => (
-                <p key={index} className="leading-relaxed" style={{ lineHeight: '1.8' }}>
-                  {paragraph}
-                </p>
-              ))}
+            {prompt.context_text && (
+              <div className="text-xl md:text-2xl leading-relaxed text-muted-foreground text-left bg-muted/20 rounded-lg p-10">
+                {prompt.context_text.split('\n').map((paragraph, index) => (
+                  <p key={index} className={index > 0 ? 'mt-5' : ''}>
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
+            )}
+            <div className="pt-16">
+              <button 
+                onClick={() => scrollToSection(3)}
+                className="hover:text-foreground hover:animate-bounce transition-colors cursor-pointer"
+                title="Continue to reflection"
+              >
+                <svg className="w-6 h-6 mx-auto text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                </svg>
+              </button>
             </div>
           </div>
         </section>
@@ -445,21 +501,15 @@ export function GenericJourney({ challengeTheme }: GenericJourneyProps) {
       {/* Section 4: God's Message Form */}
       <section 
         ref={(el) => sectionsRef.current[3] = el}
-        className="min-h-screen flex items-center justify-center px-6"
+        className="min-h-screen"
       >
-        <div className="text-center max-w-2xl mx-auto space-y-8">
-          <h2 className="text-3xl md:text-4xl font-light text-foreground">
-            What is God saying to you?
-          </h2>
-          
-          <MinimalWriter
-            value={godMessage}
-            onChange={setGodMessage}
-            onSave={handleSaveGodMessage}
-            placeholder={themeConfig.placeholder}
-            className="min-h-[200px]"
-          />
-        </div>
+        <MinimalWriter
+          value={godMessage}
+          onChange={setGodMessage}
+          onSave={handleSaveGodMessage}
+          onNext={() => scrollToSection(4)}
+          placeholder={themeConfig.placeholder}
+        />
       </section>
 
       {/* Section 5: Morning Reflection Prompt */}
@@ -468,16 +518,26 @@ export function GenericJourney({ challengeTheme }: GenericJourneyProps) {
           ref={(el) => sectionsRef.current[4] = el}
           className="min-h-screen flex items-center justify-center px-6"
         >
-          <div className="text-center max-w-3xl mx-auto space-y-8">
-            <h2 className="text-3xl md:text-4xl font-light text-foreground">
-              Morning Gratitude
-            </h2>
-            <div className="text-lg md:text-xl leading-relaxed text-muted-foreground">
-              {prompt.morning_prompt.split('\n').map((paragraph, index) => (
-                <p key={index} className="mb-4">
-                  {paragraph}
-                </p>
-              ))}
+          <div className="text-center max-w-2xl mx-auto space-y-8">
+            {prompt.morning_prompt && (
+              <div className="text-xl md:text-2xl leading-relaxed text-muted-foreground text-left bg-muted/20 rounded-lg p-10">
+                {prompt.morning_prompt.split('\n').map((paragraph, index) => (
+                  <p key={index} className={index > 0 ? 'mt-5' : ''}>
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
+            )}
+            <div className="pt-16">
+              <button 
+                onClick={() => scrollToSection(5)}
+                className="hover:text-foreground hover:animate-bounce transition-colors cursor-pointer"
+                title="Continue to write reflection"
+              >
+                <svg className="w-6 h-6 mx-auto text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                </svg>
+              </button>
             </div>
           </div>
         </section>
@@ -486,18 +546,15 @@ export function GenericJourney({ challengeTheme }: GenericJourneyProps) {
       {/* Section 6: Morning Entry Form */}
       <section 
         ref={(el) => sectionsRef.current[5] = el}
-        className="min-h-screen flex items-center justify-center px-6"
+        className="min-h-screen"
       >
-        <div className="w-full max-w-4xl mx-auto">
-          <MinimalWriter
-            value={morningEntry}
-            onChange={setMorningEntry}
-            onSave={handleSaveMorningEntry}
-            placeholder="What are you grateful for this morning?"
-            title="Morning Entry"
-            className="min-h-[200px]"
-          />
-        </div>
+        <MinimalWriter
+          value={morningEntry}
+          onChange={setMorningEntry}
+          onSave={handleSaveMorningEntry}
+          onNext={() => scrollToSection(6)}
+          placeholder="What's on your heart today? Share your thoughts and gratitude..."
+        />
       </section>
 
       {/* Section 7: Evening Reflection Prompt */}
@@ -506,16 +563,26 @@ export function GenericJourney({ challengeTheme }: GenericJourneyProps) {
           ref={(el) => sectionsRef.current[6] = el}
           className="min-h-screen flex items-center justify-center px-6"
         >
-          <div className="text-center max-w-3xl mx-auto space-y-8">
-            <h2 className="text-3xl md:text-4xl font-light text-foreground">
-              Evening Reflection
-            </h2>
-            <div className="text-lg md:text-xl leading-relaxed text-muted-foreground">
-              {prompt.evening_prompt.split('\n').map((paragraph, index) => (
-                <p key={index} className="mb-4">
-                  {paragraph}
-                </p>
-              ))}
+          <div className="text-center max-w-2xl mx-auto space-y-8">
+            {prompt.evening_prompt && (
+              <div className="text-xl md:text-2xl leading-relaxed text-muted-foreground text-left bg-muted/20 rounded-lg p-10">
+                {prompt.evening_prompt.split('\n').map((paragraph, index) => (
+                  <p key={index} className={index > 0 ? 'mt-5' : ''}>
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
+            )}
+            <div className="pt-16">
+              <button 
+                onClick={() => scrollToSection(7)}
+                className="hover:text-foreground hover:animate-bounce transition-colors cursor-pointer"
+                title="Continue to write reflection"
+              >
+                <svg className="w-6 h-6 mx-auto text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                </svg>
+              </button>
             </div>
           </div>
         </section>
@@ -524,18 +591,15 @@ export function GenericJourney({ challengeTheme }: GenericJourneyProps) {
       {/* Section 8: Evening Entry Form */}
       <section 
         ref={(el) => sectionsRef.current[7] = el}
-        className="min-h-screen flex items-center justify-center px-6"
+        className="min-h-screen"
       >
-        <div className="w-full max-w-4xl mx-auto">
-          <MinimalWriter
-            value={eveningEntry}
-            onChange={setEveningEntry}
-            onSave={handleSaveEveningEntry}
-            placeholder="What are you reflecting on this evening?"
-            title="Evening Entry"
-            className="min-h-[200px]"
-          />
-        </div>
+        <MinimalWriter
+          value={eveningEntry}
+          onChange={setEveningEntry}
+          onSave={handleSaveEveningEntry}
+          onNext={() => scrollToSection(8)}
+          placeholder="As you reflect on your day, what are you grateful for?"
+        />
       </section>
 
       {/* Section 9: Scripture Recap */}
@@ -544,34 +608,48 @@ export function GenericJourney({ challengeTheme }: GenericJourneyProps) {
           ref={(el) => sectionsRef.current[8] = el}
           className="min-h-screen flex items-center justify-center px-6"
         >
-          <div className="text-center max-w-4xl mx-auto space-y-8">
+          <div className="text-center max-w-5xl mx-auto space-y-8">
             {prompt.scripture_reference && (
-              <h2 className="text-xl md:text-2xl font-medium text-muted-foreground">
+              <p className="text-xl md:text-2xl text-primary font-medium">
                 {prompt.scripture_reference}
-              </h2>
+              </p>
             )}
-            
-            <div className="text-2xl md:text-4xl font-light leading-relaxed text-foreground">
-              {prompt.scripture_text.split(' ').map((word, index, words) => {
-                const wordProgress = index / words.length;
-                const shouldShow = recapScrollProgress >= wordProgress;
-                
-                return (
-                  <span
-                    key={index}
-                    className={`inline-block transition-all duration-300 ${
-                      shouldShow 
-                        ? 'opacity-100 transform translate-y-0' 
-                        : 'opacity-0 transform translate-y-4'
-                    }`}
-                    style={{
-                      transitionDelay: shouldShow ? `${(index % 10) * 50}ms` : '0ms'
-                    }}
-                  >
-                    {word}{index < words.length - 1 ? ' ' : ''}
-                  </span>
-                );
-              })}
+            {prompt.scripture_text && (
+              <blockquote className="text-3xl md:text-5xl font-black leading-relaxed">
+                "
+                {prompt.scripture_text.split(' ').map((word, index) => {
+                  const totalWords = prompt.scripture_text.split(' ').length;
+                  // Start animation immediately when section is in view and complete by scroll progress
+                  const adjustedProgress = Math.min(1, recapScrollProgress * 3); // Faster animation
+                  const wordRevealPoint = index / totalWords;
+                  const wordProgress = Math.max(0, Math.min(1, (adjustedProgress - wordRevealPoint) * totalWords));
+                  
+                  return (
+                    <span
+                      key={index}
+                      className="transition-opacity duration-300"
+                      style={{
+                        opacity: 0.05 + (wordProgress * 0.95)
+                      }}
+                    >
+                      {word}
+                      {index < totalWords - 1 ? ' ' : ''}
+                    </span>
+                  );
+                })}
+                "
+              </blockquote>
+            )}
+            <div className="pt-16">
+              <button 
+                onClick={() => scrollToSection(9)}
+                className="hover:text-foreground hover:animate-bounce transition-colors cursor-pointer"
+                title="Continue"
+              >
+                <svg className="w-6 h-6 mx-auto text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                </svg>
+              </button>
             </div>
           </div>
         </section>
@@ -582,21 +660,30 @@ export function GenericJourney({ challengeTheme }: GenericJourneyProps) {
         ref={(el) => sectionsRef.current[9] = el}
         className="min-h-screen flex items-center justify-center px-6"
       >
-        <div className="text-center max-w-3xl mx-auto space-y-8">
-          <h2 className="text-3xl md:text-4xl font-light text-foreground">
-            What God revealed to you
-          </h2>
-          {godMessage ? (
-            <div className="text-lg md:text-xl leading-relaxed text-brand-500">
+        <div className="text-center max-w-2xl mx-auto space-y-8">
+          <p className="text-base md:text-lg text-primary font-medium text-left">
+            What you wrote about this verse...
+          </p>
+          {godMessage && (
+            <div className="text-xl md:text-2xl leading-relaxed text-left" style={{ color: '#0498db' }}>
               {godMessage.split('\n').map((paragraph, index) => (
-                <p key={index} className="mb-4">
+                <p key={index} className={index > 0 ? 'mt-5' : ''}>
                   {paragraph}
                 </p>
               ))}
             </div>
-          ) : (
-            <p className="text-muted-foreground">No reflection recorded yet.</p>
           )}
+          <div className="pt-16">
+            <button 
+              onClick={() => scrollToSection(10)}
+              className="hover:text-foreground hover:animate-bounce transition-colors cursor-pointer"
+              title="Continue"
+            >
+              <svg className="w-6 h-6 mx-auto text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
+            </button>
+          </div>
         </div>
       </section>
 
@@ -605,21 +692,30 @@ export function GenericJourney({ challengeTheme }: GenericJourneyProps) {
         ref={(el) => sectionsRef.current[10] = el}
         className="min-h-screen flex items-center justify-center px-6"
       >
-        <div className="text-center max-w-3xl mx-auto space-y-8">
-          <h2 className="text-3xl md:text-4xl font-light text-foreground">
-            Your morning gratitude
-          </h2>
-          {morningEntry ? (
-            <div className="text-lg md:text-xl leading-relaxed text-brand-500">
+        <div className="text-center max-w-2xl mx-auto space-y-8">
+          <p className="text-base md:text-lg text-primary font-medium text-left">
+            What you wrote this morning...
+          </p>
+          {morningEntry && (
+            <div className="text-xl md:text-2xl leading-relaxed text-left" style={{ color: '#0498db' }}>
               {morningEntry.split('\n').map((paragraph, index) => (
-                <p key={index} className="mb-4">
+                <p key={index} className={index > 0 ? 'mt-5' : ''}>
                   {paragraph}
                 </p>
               ))}
             </div>
-          ) : (
-            <p className="text-muted-foreground">No morning entry recorded yet.</p>
           )}
+          <div className="pt-16">
+            <button 
+              onClick={() => scrollToSection(11)}
+              className="hover:text-foreground hover:animate-bounce transition-colors cursor-pointer"
+              title="Continue"
+            >
+              <svg className="w-6 h-6 mx-auto text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
+            </button>
+          </div>
         </div>
       </section>
 
@@ -628,21 +724,30 @@ export function GenericJourney({ challengeTheme }: GenericJourneyProps) {
         ref={(el) => sectionsRef.current[11] = el}
         className="min-h-screen flex items-center justify-center px-6"
       >
-        <div className="text-center max-w-3xl mx-auto space-y-8">
-          <h2 className="text-3xl md:text-4xl font-light text-foreground">
-            Your evening reflection
-          </h2>
-          {eveningEntry ? (
-            <div className="text-lg md:text-xl leading-relaxed text-brand-500">
+        <div className="text-center max-w-2xl mx-auto space-y-8">
+          <p className="text-base md:text-lg text-primary font-medium text-left">
+            What you wrote this evening...
+          </p>
+          {eveningEntry && (
+            <div className="text-xl md:text-2xl leading-relaxed text-left" style={{ color: '#0498db' }}>
               {eveningEntry.split('\n').map((paragraph, index) => (
-                <p key={index} className="mb-4">
+                <p key={index} className={index > 0 ? 'mt-5' : ''}>
                   {paragraph}
                 </p>
               ))}
             </div>
-          ) : (
-            <p className="text-muted-foreground">No evening entry recorded yet.</p>
           )}
+          <div className="pt-16">
+            <button 
+              onClick={() => scrollToSection(12)}
+              className="hover:text-foreground hover:animate-bounce transition-colors cursor-pointer"
+              title="Continue"
+            >
+              <svg className="w-6 h-6 mx-auto text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
+            </button>
+          </div>
         </div>
       </section>
 
@@ -653,25 +758,22 @@ export function GenericJourney({ challengeTheme }: GenericJourneyProps) {
       >
         <div className="text-center max-w-2xl mx-auto space-y-8">
           <h1 className="text-4xl md:text-6xl font-light leading-tight text-foreground">
-            Day {(todaysContent?.progress?.total_challenges_completed || 0) + 1} Complete
+            Day {challengeNumber} Complete
           </h1>
           
-          <div className="text-lg text-muted-foreground">
-            {themeConfig.completionMessage}
-          </div>
           
           <div className="pt-16">
             <HundredDayGrid 
-              completedChallenges={completedDays}
-              currentChallenge={todaysContent?.challengeNumber}
-              totalChallenges={userChallenge?.challenge?.total_challenges || 100}
+              completedDays={completedDays}
+              currentDay={challengeNumber}
+              totalChallenges={userChallenge?.challenge?.total_challenges || 86}
               size="medium"
             />
           </div>
           
           <div className="pt-16">
             <button
-              onClick={() => router.push('/dashboard')}
+              onClick={() => router.push(`/dashboard/${challengeTheme}/today`)}
               className="px-8 py-3 text-lg font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all"
             >
               Return to Dashboard
